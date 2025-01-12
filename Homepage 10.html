@@ -1,0 +1,401 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LOVE HUB</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0c29; /* Gradient background */
+      background: -webkit-linear-gradient(to right, #0f0c29, #302b63, #24243e);
+      background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+
+    .header {
+      background-color: black;
+      color: white;
+      padding: 10px 20px;
+      border-bottom-left-radius: 50px;
+      border-bottom-right-radius: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .header button {
+      background-color: pink;
+      color: black;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 15px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .header button:hover {
+      background-color: #ff80b0;
+    }
+
+    /* Glass-like container */
+    .info-container {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 15px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #ffccff;
+      animation: pulse 2s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow: 0 4px 30px rgba(255, 0, 255, 0.2);
+      }
+      to {
+        box-shadow: 0 4px 40px rgba(255, 0, 255, 0.6);
+      }
+    }
+
+    /* Full-width modern container */
+    .full-width-container {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-top: 2px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 100%; /* Full width */
+      text-align: center;
+      box-shadow: inset 0 0 10px rgba(255, 0, 255, 0.2);
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* Profile container */
+    .profile-container {
+      margin-top: 20px; /* Reduced margin */
+      width: 100%;
+      max-width: 350px; /* Smaller container width */
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px; /* Smaller border radius */
+      text-align: center;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+      margin-bottom: 15px;
+    }
+
+    .profile-image {
+      width: 80px; /* Smaller image size */
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 15px;
+      object-fit: cover;
+    }
+
+    /* Modern Green Containers */
+    .info-section {
+      margin-top: 10px;
+      background: rgba(0, 255, 0, 0.1); /* Green background */
+      border-radius: 8px; /* Smaller border radius */
+      padding: 8px; /* Less padding for smaller containers */
+      width: 100%;
+      box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
+      text-align: left;
+      color: white;
+    }
+
+    .info-section label {
+      font-weight: bold;
+      color: #00ff80; /* Light green label */
+    }
+
+    .info-section span {
+      color: #ffffff;
+    }
+
+    /* New buttons */
+    .accept-btn {
+      background-color: #c7ea46; /* Lemon Green */
+      border: none;
+      color: black;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      width: 100%;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .accept-btn:hover {
+      background-color: #a4d52b;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .button-container button {
+      padding: 12px 25px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 48%;
+    }
+
+    .back-btn {
+      background-color: red;
+      color: white;
+    }
+
+    .back-btn:hover {
+      background-color: #ff3b3b;
+    }
+
+    .next-btn {
+      background-color: blue;
+      color: white;
+    }
+
+    .next-btn:hover {
+      background-color: #4d79ff;
+    }
+
+    /* Rose button */
+    .rose-btn {
+      background-color: pink; /* Pink background */
+      color: black;
+      padding: 12px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      width: 100%;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .rose-btn:hover {
+      background-color: #ff66b3;
+    }
+
+    /* Message section */
+    .message-container {
+      margin-top: 10px;
+      color: #ffccff;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+    }
+
+    /* Cyberpunk Full Screen Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f0c29, #ff00ff, #24243e);
+      color: white;
+      z-index: 1000;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .modal-header .close-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .modal-header .close-btn:hover {
+      background-color: #ff4d4d;
+    }
+
+    .modal-content {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>LOVE HUB</h1>
+    <button>MY LOVERS</button>
+  </div>
+
+  <div class="info-container" id="info-container">
+    Mia Khalifa found a date
+  </div>
+  
+  <div class="profile-container" id="profile-container">
+    <img src="https://via.placeholder.com/80" alt="User Profile" class="profile-image">
+    
+    <div class="info-section">
+      <label>Name:</label>
+      <span>John Doe</span>
+    </div>
+    
+    <div class="info-section">
+      <label>Age & Birthdate:</label>
+      <span>20 years (3/6/2005)</span>
+    </div>
+
+    <div class="info-section">
+      <label>Gender:</label>
+      <span>Male</span>
+    </div>
+
+    <div class="info-section">
+      <label>Country:</label>
+      <span>USA</span>
+    </div>
+
+    <!-- Lemon Green ACCEPT button -->
+    <button class="accept-btn">ACCEPT</button>
+
+    <!-- Send a Rose button -->
+    <button class="rose-btn" id="roseBtn">SEND A ROSE</button>
+
+    <!-- Message container for confirmation -->
+    <div class="message-container" id="messageContainer"></div>
+
+    <!-- More modern buttons for navigation -->
+    <div class="button-container">
+      <button class="back-btn" id="backBtn">BACK</button>
+      <button class="next-btn" id="nextBtn">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    const profiles = [
+      {
+        name: "John Doe",
+        age: "20 years (3/6/2005)",
+        gender: "Male",
+        country: "USA",
+        image: "https://via.placeholder.com/80"
+      },
+      {
+        name: "Jane Smith",
+        age: "22 years (5/12/2002)",
+        gender: "Female",
+        country: "Canada",
+        image: "https://via.placeholder.com/80/ff7f7f"
+      },
+      {
+        name: "Samuel Lee",
+        age: "25 years (7/19/1998)",
+        gender: "Male",
+        country: "UK",
+        image: "https://via.placeholder.com/80/7f7fff"
+      },
+      {
+        name: "Emily Davis",
+        age: "23 years (9/2/2000)",
+        gender: "Female",
+        country: "Australia",
+        image: "https://via.placeholder.com/80/90ff90"
+      }
+    ];
+
+    let currentIndex = 0;
+    const profileContainer = document.getElementById("profile-container");
+    const backBtn = document.getElementById("backBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const roseBtn = document.getElementById("roseBtn");
+    const messageContainer = document.getElementById("messageContainer");
+
+    function updateProfile() {
+      const profile = profiles[currentIndex];
+      const profileImage = profileContainer.querySelector(".profile-image");
+      const infoSections = profileContainer.querySelectorAll(".info-section span");
+      
+      profileImage.src = profile.image;
+      infoSections[0].textContent = profile.name;
+      infoSections[1].textContent = profile.age;
+      infoSections[2].textContent = profile.gender;
+      infoSections[3].textContent = profile.country;
+      messageContainer.textContent = ""; // Clear the message on profile update
+    }
+
+    backBtn.addEventListener("click", () => {
+      currentIndex = (currentIndex - 1 + profiles.length) % profiles.length;
+      updateProfile();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % profiles.length;
+      updateProfile();
+    });
+
+    roseBtn.addEventListener("click", () => {
+      messageContainer.textContent = "You sent a rose to " + profiles[currentIndex].name + "!";
+    });
+
+    // Initialize with the first profile
+    updateProfile();
+    ;
+
+    // Modal functionality for "MY LOVERS"
+    const modal = document.getElementById("modal");
+    const myLoversBtn = document.getElementById("myLoversBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    myLoversBtn.addEventListener("click", () => {
+      modal.style.display = "block";
+    });
+
+    closeModalBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  </script>
+</body>
+</html>
