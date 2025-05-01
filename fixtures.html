@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cyberpunk Fixture Manager</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+  body { background-color: #0f0f1c; color: #00f0ff; font-family: monospace; }
+  .cyberpunk-card { background: #1a1a2e; border: 1px solid #00f0ff; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 0 15px #00f0ff44; }
+  select, input { background: #0a0a14; color: #00f0ff; border: 1px solid #00f0ff; border-radius: 0.5rem; padding: 0.5rem; width: 100%; }
+  button { background: #00f0ff; color: #0a0a14; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-top: 1rem; width: 100%; }
+  .fixture-item { background: #141426; padding: 0.5rem; border: 1px solid #00f0ff44; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+</style>
+</head>
+<body class="p-6">
+
+<div class="cyberpunk-card max-w-xl mx-auto">
+  <h1 class="text-3xl mb-4 text-center">Create Fixture</h1>
+
+  <div class="mb-4">
+    <label>User 1 (Team A):</label>
+    <select id="user1"><option value="">Select user</option></select>
+  </div>
+
+  <div class="mb-4">
+    <label>User 2 (Team B):</label>
+    <select id="user2"><option value="">Select user</option></select>
+  </div>
+
+  <div class="mb-4">
+    <label>Match Date & Time:</label>
+    <input id="matchDatetime" type="text" placeholder="Select date & time">
+  </div>
+
+  <button id="saveFixture">Save Fixture</button>
+</div>
+
+<div class="cyberpunk-card max-w-xl mx-auto mt-6">
+  <h2 class="text-2xl mb-4 text-center">Upcoming Fixtures</h2>
+  <div id="fixturesList"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Enable date & time picker
+  flatpickr("#matchDatetime", { enableTime: true, dateFormat: "Y-m-d H:i" });
+
+  async function loadUsers() {
+    const usersDocRef = doc(db, 'users', 'allUsers');
+    const docSnap = await getDoc(usersDocRef);
+
+    if (docSnap.exists()) {
+      const usersData = docSnap.data();
+      const user1 = document.getElementById('user1');
+      const user2 = document.getElementById('user2');
+
+      for (const [userId, userInfo] of Object.entries(usersData)) {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({ team: userInfo.team, username: userInfo.name });
+        option.textContent = `${userInfo.name} (${userInfo.team})`;
+        user1.appendChild(option.cloneNode(true));
+        user2.appendChild(option);
+      }
+    } else {
+      console.error('No users document found!');
+    }
+  }
+
+  function generateMatchCode() {
+    return 'MATCH-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  async function saveFixture() {
+    const user1Val = document.getElementById('user1').value;
+    const user2Val = document.getElementById('user2').value;
+    const matchDatetime = document.getElementById('matchDatetime').value;
+
+    if (!user1Val || !user2Val || !matchDatetime) {
+      alert('Please select both users and match date/time.');
+      return;
+    }
+
+    const u1 = JSON.parse(user1Val);
+    const u2 = JSON.parse(user2Val);
+
+    if (u1.username === u2.username) {
+      alert('Select two different users.');
+      return;
+    }
+
+    const matchcode = generateMatchCode();
+    const fixture = {
+      matchcode,
+      teamA: u1.team,
+      teamB: u2.team,
+      matchtime: matchDatetime
+    };
+
+    await setDoc(doc(db, 'fixtures', matchcode), fixture);
+    alert(`Fixture saved!\n${fixture.teamA} vs ${fixture.teamB}\nCode: ${matchcode}`);
+    loadFixtures();  // refresh list after save
+  }
+
+  async function cleanupExpiredFixtures() {
+    const snapshot = await getDocs(collection(db, 'fixtures'));
+    const now = new Date();
+
+    snapshot.forEach(async docSnap => {
+      const data = docSnap.data();
+      const matchTime = new Date(data.matchtime);
+      const endTime = new Date(matchTime.getTime() + 15 * 60000); // +15 min
+
+      if (now > endTime) {
+        await deleteDoc(doc(db, 'fixtures', data.matchcode));
+        console.log(`Deleted expired fixture: ${data.matchcode}`);
+      }
+    });
+  }
+
+  async function loadFixtures() {
+    await cleanupExpiredFixtures();
+    const snapshot = await getDocs(collection(db, 'fixtures'));
+    const fixturesList = document.getElementById('fixturesList');
+    fixturesList.innerHTML = '';
+
+    const fixtures = [];
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      fixtures.push(data);
+    });
+
+    // Sort by matchtime ascending
+    fixtures.sort((a, b) => new Date(a.matchtime) - new Date(b.matchtime));
+
+    if (fixtures.length === 0) {
+      fixturesList.innerHTML = '<p class="text-center text-gray-400">No upcoming fixtures.</p>';
+    } else {
+      fixtures.forEach(fix => {
+        const item = document.createElement('div');
+        item.className = 'fixture-item';
+        item.innerHTML = `
+          <strong>${fix.teamA} vs ${fix.teamB}</strong><br>
+          Time: ${fix.matchtime}<br>
+          Code: <span class="text-pink-400">${fix.matchcode}</span>
+        `;
+        fixturesList.appendChild(item);
+      });
+    }
+  }
+
+  document.getElementById('saveFixture').addEventListener('click', saveFixture);
+
+  loadUsers();
+  loadFixtures();
+</script>
+
+</body>
+</html>
