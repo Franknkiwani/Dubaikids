@@ -3,42 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <title>Champions League Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; }
-#adminPanel { max-width:700px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 0 12px rgba(0,0,0,0.2); }
-h2 { text-align:center; margin-bottom:20px; }
-.admin-section { margin-bottom:30px; border-top:1px solid #ddd; padding-top:15px; }
-label { display:block; margin-top:10px; }
-input, select, button { padding:8px; margin-top:5px; width:100%; border-radius:6px; border:1px solid #ccc; }
-button { background:#007bff; color:white; border:none; cursor:pointer; }
-button:hover { background:#0056b3; }
-.team-item { margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
-.team-item button { padding:5px 8px; font-size:12px; margin-left:5px; }
+body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #e0e0e0;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+#adminPanel {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+.panel-box {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+h2, h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-top: 12px;
+}
+input, select, button {
+  padding: 10px;
+  margin-top: 6px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #eee;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:hover {
+  background: #0056b3;
+}
+.team-item {
+  display: flex;
+  flex-direction: column;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.team-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.team-item-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 5px;
+}
+.team-item button {
+  padding: 6px;
+  font-size: 12px;
+}
+@media (min-width: 600px) {
+  .team-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .team-item-actions {
+    margin-top: 0;
+  }
+}
 </style>
 </head>
 <body>
 
 <div id="adminPanel">
-<h2>Champions League Admin Panel</h2>
+  <h2>Champions League Admin Panel</h2>
 
-<div class="admin-section">
-<h3>Season Settings</h3>
-<label>Stage</label>
-<input type="text" id="stageInput">
-<label>Season End (date/time)</label>
-<input type="datetime-local" id="seasonEndInput">
-<label>Status</label>
-<select id="statusSelect">
-  <option value="open">Open</option>
-  <option value="closed">Closed</option>
-</select>
-<button id="saveMetaBtn">Save Settings</button>
-</div>
+  <div class="panel-box">
+    <h3>Season Settings</h3>
+    <label>Stage</label>
+    <input type="text" id="stageInput">
 
-<div class="admin-section">
-<h3>Manage Teams</h3>
-<div id="teamList"></div>
-</div>
+    <label>Season End (date/time)</label>
+    <input type="datetime-local" id="seasonEndInput">
+
+    <label>Status</label>
+    <select id="statusSelect">
+      <option value="open">Open</option>
+      <option value="closed">Closed</option>
+    </select>
+
+    <button id="saveMetaBtn">Save Settings</button>
+  </div>
+
+  <div class="panel-box">
+    <h3>Manage Teams</h3>
+    <div id="teamList"></div>
+  </div>
 
 </div>
 
@@ -46,7 +121,7 @@ button:hover { background:#0056b3; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-// SAME Firebase config as your script
+// SAME Firebase config as before
 const firebaseConfig = {
   apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
   authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -109,9 +184,12 @@ function loadTeams() {
       const div = document.createElement('div');
       div.className = 'team-item';
       div.innerHTML = `
-        <div><b>${teamName}</b> (${username}) ${knockedOut ? '<span style="color:red;">[KO]</span>' : ''}</div>
-        <div>
+        <div class="team-item-header">
+          <div><b>${teamName}</b> (${username}) ${knockedOut ? '<span style="color:red;">[KO]</span>' : ''}</div>
+        </div>
+        <div class="team-item-actions">
           <button style="background:orange;" data-action="knockout">Knock Out</button>
+          <button style="background:green;" data-action="revive">Revive</button>
           <button style="background:darkred;" data-action="delete">Delete</button>
         </div>
       `;
@@ -121,6 +199,9 @@ function loadTeams() {
         btn.onclick = async () => {
           if (btn.dataset.action === 'knockout') {
             await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: true });
+          }
+          if (btn.dataset.action === 'revive') {
+            await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: false });
           }
           if (btn.dataset.action === 'delete') {
             const confirmDel = confirm('Delete team "' + teamName + '"?');
