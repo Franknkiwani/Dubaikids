@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upcoming Fixture Submission</title>
   <style>
+    /* Basic styling for the form */
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
@@ -101,12 +102,16 @@
     const teamBSelect = document.getElementById('teamB');
 
     // Fetch teams from Firebase
-    get(ref(db, 'users/teams')).then((snapshot) => {
+    get(ref(db, 'users')).then((snapshot) => {
       if (snapshot.exists()) {
-        const teams = snapshot.val();
+        const users = snapshot.val();
+        const teams = [];
+        Object.values(users).forEach(user => {
+          teams.push(user.team);
+        });
         populateTeamDropdowns(teams);
       } else {
-        loadingElement.innerText = "No teams found!";
+        loadingElement.innerText = "No users found!";
       }
     }).catch((error) => {
       console.error("Error fetching teams:", error);
@@ -118,15 +123,15 @@
       loadingElement.style.display = 'none';
 
       // Populate the dropdowns with team names from Firebase
-      Object.values(teams).forEach(team => {
+      teams.forEach(team => {
         const optionA = document.createElement('option');
-        optionA.value = team.name;
-        optionA.textContent = team.name;
+        optionA.value = team;
+        optionA.textContent = team;
         teamASelect.appendChild(optionA);
 
         const optionB = document.createElement('option');
-        optionB.value = team.name;
-        optionB.textContent = team.name;
+        optionB.value = team;
+        optionB.textContent = team;
         teamBSelect.appendChild(optionB);
       });
     }
