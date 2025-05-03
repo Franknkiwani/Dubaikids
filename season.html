@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Champions League Admin Panel</title>
+<style>
+body { font-family: Arial, sans-serif; padding:20px; background:#f5f5f5; }
+#adminPanel { max-width:700px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 0 12px rgba(0,0,0,0.2); }
+h2 { text-align:center; margin-bottom:20px; }
+.admin-section { margin-bottom:30px; border-top:1px solid #ddd; padding-top:15px; }
+label { display:block; margin-top:10px; }
+input, select, button { padding:8px; margin-top:5px; width:100%; border-radius:6px; border:1px solid #ccc; }
+button { background:#007bff; color:white; border:none; cursor:pointer; }
+button:hover { background:#0056b3; }
+.team-item { margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.team-item button { padding:5px 8px; font-size:12px; margin-left:5px; }
+</style>
+</head>
+<body>
+
+<div id="adminPanel">
+<h2>Champions League Admin Panel</h2>
+
+<div class="admin-section">
+<h3>Season Settings</h3>
+<label>Stage</label>
+<input type="text" id="stageInput">
+<label>Season End (date/time)</label>
+<input type="datetime-local" id="seasonEndInput">
+<label>Status</label>
+<select id="statusSelect">
+  <option value="open">Open</option>
+  <option value="closed">Closed</option>
+</select>
+<button id="saveMetaBtn">Save Settings</button>
+</div>
+
+<div class="admin-section">
+<h3>Manage Teams</h3>
+<div id="teamList"></div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+// SAME Firebase config as your script
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Elements
+const stageInput = document.getElementById('stageInput');
+const seasonEndInput = document.getElementById('seasonEndInput');
+const statusSelect = document.getElementById('statusSelect');
+const saveMetaBtn = document.getElementById('saveMetaBtn');
+const teamList = document.getElementById('teamList');
+
+// Load Meta
+function loadMeta() {
+  const metaRef = ref(db, 'championsleague/meta');
+  onValue(metaRef, snapshot => {
+    const meta = snapshot.val();
+    if (meta) {
+      stageInput.value = meta.stage || '';
+      statusSelect.value = meta.status || 'closed';
+      if (meta.seasonEnd) {
+        const dt = new Date(meta.seasonEnd);
+        seasonEndInput.value = dt.toISOString().slice(0,16);
+      }
+    }
+  });
+}
+
+// Save Meta
+saveMetaBtn.onclick = async () => {
+  const data = {
+    stage: stageInput.value.trim(),
+    status: statusSelect.value,
+    seasonEnd: new Date(seasonEndInput.value).toISOString()
+  };
+  await set(ref(db, 'championsleague/meta'), data);
+  alert('Season settings updated!');
+};
+
+// Load Teams
+function loadTeams() {
+  const teamsRef = ref(db, 'championsleague/teams');
+  onValue(teamsRef, snapshot => {
+    teamList.innerHTML = '';
+    snapshot.forEach(teamSnap => {
+      const teamName = teamSnap.key;
+      const data = teamSnap.val();
+      const knockedOut = data.knockedOut === true;
+      const username = data.username || 'Unknown';
+
+      const div = document.createElement('div');
+      div.className = 'team-item';
+      div.innerHTML = `
+        <div><b>${teamName}</b> (${username}) ${knockedOut ? '<span style="color:red;">[KO]</span>' : ''}</div>
+        <div>
+          <button style="background:orange;" data-action="knockout">Knock Out</button>
+          <button style="background:darkred;" data-action="delete">Delete</button>
+        </div>
+      `;
+
+      const btns = div.querySelectorAll('button');
+      btns.forEach(btn => {
+        btn.onclick = async () => {
+          if (btn.dataset.action === 'knockout') {
+            await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: true });
+          }
+          if (btn.dataset.action === 'delete') {
+            const confirmDel = confirm('Delete team "' + teamName + '"?');
+            if (confirmDel) {
+              await remove(ref(db, 'championsleague/teams/' + teamName));
+            }
+          }
+        };
+      });
+      teamList.appendChild(div);
+    });
+  });
+}
+
+// Init
+loadMeta();
+loadTeams();
+</script>
+
+</body>
+</html>
