@@ -86,10 +86,10 @@ button:hover {
     margin-top: 0;
   }
 }
-.countdown {
+#countdownContainer {
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 18px;
+  margin-top: 15px;
+  font-size: 16px;
 }
 </style>
 </head>
@@ -97,13 +97,6 @@ button:hover {
 
 <div id="adminPanel">
   <h2>Champions League Admin Panel</h2>
-
-  <div class="panel-box">
-    <h3>Season Countdown</h3>
-    <div id="countdownContainer" class="countdown">
-      Loading countdown...
-    </div>
-  </div>
 
   <div class="panel-box">
     <h3>Season Settings</h3>
@@ -120,6 +113,7 @@ button:hover {
     </select>
 
     <button id="saveMetaBtn">Save Settings</button>
+    <div id="countdownContainer"></div>
   </div>
 
   <div class="panel-box">
@@ -156,7 +150,7 @@ const saveMetaBtn = document.getElementById('saveMetaBtn');
 const teamList = document.getElementById('teamList');
 const countdownContainer = document.getElementById('countdownContainer');
 
-// === LOAD META ===
+// Load Meta
 function loadMeta() {
   const metaRef = ref(db, 'championsleague/meta');
   onValue(metaRef, snapshot => {
@@ -172,7 +166,7 @@ function loadMeta() {
   });
 }
 
-// === SAVE META (update both places) ===
+// Save Meta & seasonends
 saveMetaBtn.onclick = async () => {
   const stage = stageInput.value.trim();
   const status = statusSelect.value;
@@ -186,15 +180,13 @@ saveMetaBtn.onclick = async () => {
   };
   await set(ref(db, 'championsleague/meta'), data);
 
-  // Clear /seasonends and set new
-  const seasonEndsRef = ref(db, 'seasonends');
-  await set(seasonEndsRef, {});  // Clear all
-  await set(ref(db, 'seasonends/' + seasonEndISO), true);  // Set new
+  // Save into /seasonends (direct value)
+  await set(ref(db, 'seasonends'), seasonEndISO);
 
   alert('Season settings updated!');
 };
 
-// === LOAD TEAMS ===
+// Load Teams
 function loadTeams() {
   const teamsRef = ref(db, 'championsleague/teams');
   onValue(teamsRef, snapshot => {
@@ -243,15 +235,14 @@ function loadTeams() {
 // === SEASON COUNTDOWN ===
 let countdownInterval;
 onValue(ref(db, 'seasonends'), (snapshot) => {
-  const seasonEndsData = snapshot.val();
-  const dates = seasonEndsData ? Object.keys(seasonEndsData) : [];
-  if (dates.length === 0) {
+  const endTime = snapshot.val();
+  if (!endTime) {
     countdownContainer.innerHTML = "<span style='color:gray;'>Season end time not set</span>";
     clearInterval(countdownInterval);
     return;
   }
 
-  const endDate = new Date(dates[0]);
+  const endDate = new Date(endTime);
   clearInterval(countdownInterval);
   updateCountdown(endDate);
   countdownInterval = setInterval(() => updateCountdown(endDate), 1000);
@@ -278,7 +269,7 @@ function updateCountdown(endDate) {
   `;
 }
 
-// === INIT ===
+// Init
 loadMeta();
 loadTeams();
 </script>
