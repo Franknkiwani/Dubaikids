@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upcoming Fixtures</title>
+  <title>Upcoming Fixture Submission</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -24,7 +24,7 @@
       margin-bottom: 5px;
     }
 
-    .form-container input, .form-container select, .form-container button {
+    .form-container select, .form-container button {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -41,20 +41,29 @@
     button:hover {
       background-color: #0056b3;
     }
+
+    .loading {
+      color: gray;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <h1>Upcoming Fixture Submission</h1>
   <div class="form-container">
     <form id="fixtureForm">
-      <label for="teamA">Team A Name:</label>
-      <input type="text" id="teamA" name="teamA" required>
+      <label for="teamA">Team A:</label>
+      <select id="teamA" name="teamA" required>
+        <option value="">Select Team A</option>
+      </select>
 
       <label for="ownerA">Team A Owner:</label>
       <input type="text" id="ownerA" name="ownerA" required>
 
-      <label for="teamB">Team B Name:</label>
-      <input type="text" id="teamB" name="teamB" required>
+      <label for="teamB">Team B:</label>
+      <select id="teamB" name="teamB" required>
+        <option value="">Select Team B</option>
+      </select>
 
       <label for="ownerB">Team B Owner:</label>
       <input type="text" id="ownerB" name="ownerB" required>
@@ -66,9 +75,11 @@
     </form>
   </div>
 
+  <div id="loading" class="loading">Loading teams...</div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
@@ -83,20 +94,55 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
     const fixtureForm = document.getElementById('fixtureForm');
+    const loadingElement = document.getElementById('loading');
 
+    const teamASelect = document.getElementById('teamA');
+    const teamBSelect = document.getElementById('teamB');
+
+    // Fetch teams from Firebase
+    get(ref(db, 'users/teams')).then((snapshot) => {
+      if (snapshot.exists()) {
+        const teams = snapshot.val();
+        populateTeamDropdowns(teams);
+      } else {
+        loadingElement.innerText = "No teams found!";
+      }
+    }).catch((error) => {
+      console.error("Error fetching teams:", error);
+      loadingElement.innerText = "Error loading teams.";
+    });
+
+    function populateTeamDropdowns(teams) {
+      // Clear loading message
+      loadingElement.style.display = 'none';
+
+      // Populate the dropdowns with team names from Firebase
+      Object.values(teams).forEach(team => {
+        const optionA = document.createElement('option');
+        optionA.value = team.name;
+        optionA.textContent = team.name;
+        teamASelect.appendChild(optionA);
+
+        const optionB = document.createElement('option');
+        optionB.value = team.name;
+        optionB.textContent = team.name;
+        teamBSelect.appendChild(optionB);
+      });
+    }
+
+    // Form submission handler
     fixtureForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const teamA = document.getElementById('teamA').value;
+      const teamA = teamASelect.value;
       const ownerA = document.getElementById('ownerA').value;
-      const teamB = document.getElementById('teamB').value;
+      const teamB = teamBSelect.value;
       const ownerB = document.getElementById('ownerB').value;
       const date = new Date(document.getElementById('date').value).toISOString();
 
-      const fixtureRef = ref(db, 'upcomingfixtures/' + new Date().getTime()); // Using timestamp as unique ID for fixture
-
+      // Save fixture to Firebase
+      const fixtureRef = ref(db, 'fixtures/' + new Date().getTime()); // Use timestamp as unique ID for fixture
       set(fixtureRef, {
         teamA: teamA,
         ownerA: ownerA,
