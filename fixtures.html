@@ -1,95 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fixture Manager</title>
+<title>Manage Fixtures</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body {
-    margin: 40px;
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #121212;
-    color: #e0e0e0;
-  }
-
-  h1, h2 {
-    color: #ffffff;
-  }
-
-  select, input, button {
-    display: block;
-    width: 100%;
-    max-width: 400px;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #333;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    font-size: 16px;
-  }
-
-  button {
-    background-color: #007bff;
-    border: none;
-    color: white;
-    transition: background 0.3s;
-  }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  .fixture {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #333;
-  }
-
-  .fixture-title {
-    font-weight: bold;
-    font-size: 18px;
-    margin-bottom: 5px;
-  }
-
-  .fixture-info {
-    margin-bottom: 8px;
-  }
-
-  .buttons {
-    margin-top: 8px;
-  }
-
-  .buttons button {
-    width: auto;
-    margin-right: 10px;
-  }
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: #121212;
+  color: #f1f1f1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+.container {
+  width: 100%;
+  max-width: 400px;
+}
+form, .fixtures {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 5px;
+}
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 16px;
+}
+button {
+  background: #007bff;
+  font-weight: bold;
+}
+button:hover {
+  background: #0056b3;
+}
+.fixture {
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.fixture span {
+  display: block;
+  margin-bottom: 4px;
+}
+.move-btn {
+  background: #28a745;
+  margin-top: 8px;
+}
+.move-btn:hover {
+  background: #1e7e34;
+}
 </style>
 </head>
 <body>
+<div class="container">
+  <h2 style="text-align:center">Add Fixture</h2>
+  <form id="fixtureForm">
+    <label>Team A (Owner)</label>
+    <select id="teamASelect" required></select><label>Team B (Owner)</label>
+<select id="teamBSelect" required></select>
 
-<h1>Fixture Manager</h1>
+<label>Fixture Date & Time</label>
+<input type="datetime-local" id="fixtureDate" required>
 
-<form id="fixtureForm">
-  <label for="userA">Select Team A (Owner):</label>
-  <select id="userA" required></select>
-  <div id="teamADisplay"></div>
+<button type="submit">Add Fixture</button>
 
-  <label for="userB">Select Team B (Owner):</label>
-  <select id="userB" required></select>
-  <div id="teamBDisplay"></div>
-
-  <label for="date">Fixture Date:</label>
-  <input type="datetime-local" id="date" required>
-
-  <button type="submit">Add Fixture</button>
-</form>
-
-<h2>Upcoming Fixtures</h2>
-<div id="fixtureList"></div>
-
-<script type="module">
+  </form>  <h2 style="text-align:center">Upcoming Fixtures</h2>
+  <div class="fixtures" id="fixturesList"></div>
+</div><script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
@@ -98,170 +96,112 @@ const firebaseConfig = {
   projectId: "itzhoyoo-f9f7e",
   storageBucket: "itzhoyoo-f9f7e.appspot.com",
   messagingSenderId: "1094792075584",
-  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-  measurementId: "G-LLT6F9WRKH"
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const userASelect = document.getElementById('userA');
-const userBSelect = document.getElementById('userB');
-const teamADisplay = document.getElementById('teamADisplay');
-const teamBDisplay = document.getElementById('teamBDisplay');
+const teamASelect = document.getElementById('teamASelect');
+const teamBSelect = document.getElementById('teamBSelect');
 const fixtureForm = document.getElementById('fixtureForm');
-const fixtureList = document.getElementById('fixtureList');
+const fixturesList = document.getElementById('fixturesList');
 
-let usersData = {};
-let currentFixtures = {};
-
-async function loadUsers() {
-  const usersRef = ref(db, 'users');
-  const snapshot = await get(usersRef);
-  if (snapshot.exists()) {
-    usersData = snapshot.val();
-    populateDropdowns();
-  }
-}
-
-async function loadFixtures() {
-  const fixturesRef = ref(db, 'upcomingfixtures');
-  const snapshot = await get(fixturesRef);
-  currentFixtures = snapshot.exists() ? snapshot.val() : {};
-  displayFixtures();
-  populateDropdowns();
-}
-
-function populateDropdowns() {
-  const usedUserIds = new Set();
-  Object.values(currentFixtures).forEach(fixture => {
-    for (const userId in usersData) {
-      const user = usersData[userId];
-      if (user.username === fixture.ownerA || user.username === fixture.ownerB) {
-        usedUserIds.add(userId);
-      }
-    }
-  });
-
-  const availableUsers = Object.keys(usersData).filter(uid => !usedUserIds.has(uid));
-
-  const buildOptions = (select) => {
-    select.innerHTML = `<option value="">-- Select User --</option>`;
-    availableUsers.forEach(uid => {
-      const option = document.createElement('option');
-      option.value = uid;
-      option.textContent = usersData[uid].username;
-      select.appendChild(option);
+// Load available teams (not already in upcomingFixtures)
+function loadTeams() {
+  get(ref(db, 'users')).then(snapshot => {
+    const allTeams = [];
+    snapshot.forEach(child => {
+      const data = child.val();
+      allTeams.push({ username: data.username, team: data.team });
     });
-  };
 
-  buildOptions(userASelect);
-  buildOptions(userBSelect);
+    get(ref(db, 'upcomingfixtures')).then(fixSnap => {
+      const usedTeams = [];
+      fixSnap.forEach(fix => {
+        const data = fix.val();
+        usedTeams.push(data.teamA, data.teamB);
+      });
+
+      const available = allTeams.filter(t => !usedTeams.includes(t.team));
+
+      [teamASelect, teamBSelect].forEach(select => {
+        select.innerHTML = '<option value="">Select</option>';
+        available.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = JSON.stringify(t);
+          opt.textContent = `${t.team} (${t.username})`;
+          select.appendChild(opt);
+        });
+      });
+    });
+  });
 }
 
-userASelect.addEventListener('change', () => {
-  const userId = userASelect.value;
-  teamADisplay.textContent = userId ? 'Team: ' + usersData[userId].team : "";
-});
-userBSelect.addEventListener('change', () => {
-  const userId = userBSelect.value;
-  teamBDisplay.textContent = userId ? 'Team: ' + usersData[userId].team : "";
-});
-
-fixtureForm.addEventListener('submit', async (e) => {
+// Add fixture
+fixtureForm.addEventListener('submit', e => {
   e.preventDefault();
-  const userAId = userASelect.value;
-  const userBId = userBSelect.value;
-  const dateInput = document.getElementById('date').value;
+  const a = JSON.parse(teamASelect.value);
+  const b = JSON.parse(teamBSelect.value);
+  const date = new Date(document.getElementById('fixtureDate').value).toISOString();
+  const key = Date.now();
 
-  if (!userAId || !userBId || userAId === userBId) {
-    alert('Please select two different teams.');
-    return;
+  if (a.team === b.team) {
+    alert('Teams cannot be the same'); return;
   }
 
-  const userA = usersData[userAId];
-  const userB = usersData[userBId];
-
-  const fixtureData = {
-    date: new Date(dateInput).toISOString(),
-    ownerA: userA.username,
-    teamA: userA.team,
-    ownerB: userB.username,
-    teamB: userB.team
-  };
-
-  const fixtureId = 'fixture-' + Date.now();
-  const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
-  await set(fixtureRef, fixtureData);
-
-  fixtureForm.reset();
-  teamADisplay.textContent = "";
-  teamBDisplay.textContent = "";
-  await loadFixtures();
+  set(ref(db, 'upcomingfixtures/' + key), {
+    teamA: a.team,
+    ownerA: a.username,
+    teamB: b.team,
+    ownerB: b.username,
+    date: date
+  }).then(() => {
+    fixtureForm.reset();
+    loadTeams();
+  });
 });
 
-function displayFixtures() {
-  fixtureList.innerHTML = '';
-  if (!Object.keys(currentFixtures).length) {
-    fixtureList.innerHTML = "<p>No fixtures available.</p>";
-    return;
-  }
+// Load fixtures and show buttons
+function loadFixtures() {
+  onValue(ref(db, 'upcomingfixtures'), snap => {
+    fixturesList.innerHTML = '';
+    const now = new Date();
 
-  Object.entries(currentFixtures).forEach(([id, fixture]) => {
-    const div = document.createElement('div');
-    div.className = 'fixture';
-    div.innerHTML = `
-      <div class="fixture-title">${fixture.teamA} vs ${fixture.teamB}</div>
-      <div class="fixture-info"><strong>Owner A:</strong> ${fixture.ownerA}</div>
-      <div class="fixture-info"><strong>Owner B:</strong> ${fixture.ownerB}</div>
-      <div class="fixture-info"><strong>Date:</strong> ${new Date(fixture.date).toLocaleString()}</div>
-      <div class="buttons">
-        <button onclick="editFixture('${id}')">Edit Date</button>
-        <button onclick="deleteFixture('${id}')">Delete</button>
-      </div>
-    `;
-    fixtureList.appendChild(div);
+    snap.forEach(child => {
+      const key = child.key;
+      const data = child.val();
+      const fixtureEl = document.createElement('div');
+      fixtureEl.className = 'fixture';
+      const fixtureDate = new Date(data.date);
+
+      fixtureEl.innerHTML = `
+        <span><b>${data.teamA}</b> (${data.ownerA}) vs <b>${data.teamB}</b> (${data.ownerB})</span>
+        <span>Date: ${fixtureDate.toLocaleString()}</span>
+      `;
+
+      if (fixtureDate < now) {
+        const moveBtn = document.createElement('button');
+        moveBtn.className = 'move-btn';
+        moveBtn.textContent = 'Move to Previous';
+        moveBtn.onclick = () => moveToPrevious(key, data);
+        fixtureEl.appendChild(moveBtn);
+      }
+
+      fixturesList.appendChild(fixtureEl);
+    });
+
+    loadTeams();
   });
 }
 
-window.editFixture = async (fixtureId) => {
-  const newInput = document.createElement('input');
-  newInput.type = 'datetime-local';
-  newInput.style.background = '#1e1e1e';
-  newInput.style.color = '#e0e0e0';
-  newInput.style.border = '1px solid #333';
-  newInput.style.padding = '5px';
-  const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = 'Save Date';
-  confirmBtn.style.marginTop = '5px';
-
-  const container = document.createElement('div');
-  container.appendChild(newInput);
-  container.appendChild(confirmBtn);
-
-  const fixtureDiv = event.target.parentNode.parentNode;
-  fixtureDiv.appendChild(container);
-
-  confirmBtn.addEventListener('click', async () => {
-    if (newInput.value) {
-      const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
-      await update(fixtureRef, { date: new Date(newInput.value).toISOString() });
-      await loadFixtures();
-    }
+function moveToPrevious(key, data) {
+  const prevRef = ref(db, 'previousfixtures/' + key);
+  set(prevRef, data).then(() => {
+    remove(ref(db, 'upcomingfixtures/' + key));
   });
-};
+}
 
-window.deleteFixture = async (fixtureId) => {
-  if (confirm('Are you sure you want to delete this fixture?')) {
-    const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
-    await remove(fixtureRef);
-    await loadFixtures();
-  }
-};
-
-await loadUsers();
-await loadFixtures();
-</script>
-
-</body>
+loadTeams();
+loadFixtures();
+</script></body>
 </html>
