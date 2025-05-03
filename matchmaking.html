@@ -1,155 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Champions League Pair Maker</title>
-<style>
-  body {
-    background: #121212;
-    color: #fff;
-    font-family: sans-serif;
-    padding: 20px;
-  }
-  .user-select {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 20px;
-  }
-  select {
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #1f1f1f;
-    color: #fff;
-    border: 1px solid #444;
-    border-radius: 5px;
-  }
-  button {
-    padding: 10px 20px;
-    background: gold;
-    color: #000;
-    border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  #status {
-    margin-top: 15px;
-    font-weight: bold;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Create Match & View Matches</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 80%;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #121212;
+      color: white;
+      border-radius: 10px;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background-color: #333;
+      color: white;
+    }
+    button {
+      background-color: #6200ea;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3700b3;
+    }
+    #matches {
+      margin-top: 40px;
+    }
+    .match-item {
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #1f1f1f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .match-details {
+      color: #bbb;
+    }
+    .delete-btn {
+      background-color: #d32f2f;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      color: white;
+      border-radius: 5px;
+    }
+    .delete-btn:hover {
+      background-color: #b71c1c;
+    }
+    .timer {
+      font-weight: bold;
+      color: #f57c00;
+    }
+  </style>
 </head>
 <body>
 
-<h1>Champions League Pair Maker (Admin)</h1>
+  <h2>Create Match</h2>
 
-<div class="user-select">
-  <label>Select Team 1:</label>
-  <select id="team1Select"><option>Loading users...</option></select>
+  <form id="matchForm">
+    <label>Team A:
+      <input type="text" id="teamA" required>
+    </label>
 
-  <label>Select Team 2:</label>
-  <select id="team2Select"><option>Loading users...</option></select>
+    <label>Team B:
+      <input type="text" id="teamB" required>
+    </label>
 
-  <button onclick="pairTeams()">Pair Teams</button>
+    <label>Scheduled Time (optional, ISO format or timestamp):
+      <input type="text" id="scheduledTime">
+    </label>
 
-  <div id="status"></div>
-</div>
+    <button type="submit">Create Match</button>
+  </form>
+
+  <p id="status"></p>
+
+  <div id="matches">
+    <h3>All Matches</h3>
+    <div id="matchList"></div>
+  </div>
 
 <script type="module">
-// ---- Firebase v11 (your config) ----
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-  projectId: "itzhoyoo-f9f7e",
-  storageBucket: "itzhoyoo-f9f7e.appspot.com",
-  messagingSenderId: "1094792075584",
-  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-  measurementId: "G-LLT6F9WRKH"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.firebasestorage.app",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  const analytics = getAnalytics(app);
 
-// Elements
-const team1Select = document.getElementById('team1Select');
-const team2Select = document.getElementById('team2Select');
-const statusDiv = document.getElementById('status');
+  const form = document.getElementById('matchForm');
+  const statusText = document.getElementById('status');
+  const matchList = document.getElementById('matchList');
 
-// Load Users
-async function loadUsers() {
-  try {
-    const snapshot = await get(ref(db, 'users'));
-    if (snapshot.exists()) {
-      const users = snapshot.val();
-      team1Select.innerHTML = '';
-      team2Select.innerHTML = '';
+  // Create match handler
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-      for (const userId in users) {
-        const teamName = users[userId].teams || 'Unknown Team';
-        const option1 = document.createElement('option');
-        option1.value = userId;
-        option1.textContent = `${teamName} (${userId})`;
+    const teamA = document.getElementById('teamA').value.trim();
+    const teamB = document.getElementById('teamB').value.trim();
+    const scheduledInput = document.getElementById('scheduledTime').value.trim();
 
-        const option2 = option1.cloneNode(true);
-        team1Select.appendChild(option1);
-        team2Select.appendChild(option2);
+    if (!teamA || !teamB) {
+      statusText.textContent = 'Both teams are required.';
+      return;
+    }
+
+    let scheduledTime = null;
+    if (scheduledInput) {
+      const parsedTime = Date.parse(scheduledInput);
+      scheduledTime = isNaN(parsedTime) ? Number(scheduledInput) : parsedTime;
+      if (isNaN(scheduledTime)) {
+        statusText.textContent = 'Invalid scheduled time.';
+        return;
       }
-    } else {
-      statusDiv.textContent = 'No users found.';
     }
-  } catch (error) {
-    statusDiv.textContent = 'Error loading users: ' + error;
-  }
-}
 
-// Pair Teams
-async function pairTeams() {
-  const userId1 = team1Select.value;
-  const userId2 = team2Select.value;
-
-  if (userId1 === userId2) {
-    statusDiv.textContent = 'You cannot pair the same team against itself.';
-    return;
-  }
-
-  try {
-    const snapshot1 = await get(ref(db, 'users/' + userId1));
-    const snapshot2 = await get(ref(db, 'users/' + userId2));
-
-    if (snapshot1.exists() && snapshot2.exists()) {
-      const user1 = snapshot1.val();
-      const user2 = snapshot2.val();
-
-      const team1Name = user1.teams || 'Team1';
-      const team2Name = user2.teams || 'Team2';
-
-      // Store pairing
-      const pairKey = [userId1, userId2].sort().join('_vs_');
-
-      const matchData = {
-        team1: team1Name,
-        team2: team2Name,
-        user1Id: userId1,
-        user2Id: userId2,
-        timer: "00:00"
-      };
-
-      await set(ref(db, 'championsleaguematches/' + pairKey), matchData);
-      statusDiv.textContent = `Paired: ${team1Name} vs ${team2Name} — Saved!`;
-    } else {
-      statusDiv.textContent = 'One or both users not found.';
+    const matchData = { teamA, teamB };
+    if (scheduledTime) {
+      matchData.scheduledTime = scheduledTime;
     }
-  } catch (error) {
-    statusDiv.textContent = 'Error pairing teams: ' + error;
-  }
-}
 
-// Initialize
-loadUsers();
+    const matchesRef = ref(database, 'matchmaking/matches');
+    const newMatchRef = push(matchesRef);
+    set(newMatchRef, matchData)
+      .then(() => {
+        statusText.textContent = 'Match created successfully!';
+        form.reset();
+      })
+      .catch(error => {
+        console.error('Error saving match:', error);
+        statusText.textContent = 'Error saving match.';
+      });
+  });
 
+  // Load and display matches with delete option and countdown timer
+  const matchesRef = ref(database, 'matchmaking/matches');
+  onValue(matchesRef, (snapshot) => {
+    matchList.innerHTML = '';  // Clear current list
+    if (snapshot.exists()) {
+      snapshot.forEach(matchSnap => {
+        const match = matchSnap.val();
+        const matchId = matchSnap.key;
+        const teamA = match.teamA;
+        const teamB = match.teamB;
+        const scheduledTime = match.scheduledTime ? new Date(match.scheduledTime).getTime() : null;
+        
+        // Create match element
+        const div = document.createElement('div');
+        div.className = 'match-item';
+
+        let timerText = '';
+        if (scheduledTime) {
+          const timeLeft = Math.max(0, scheduledTime - Date.now());
+          const minutes = Math.floor(timeLeft / 60000);
+          const seconds = Math.floor((timeLeft % 60000) / 1000);
+          timerText = `<span class="timer">${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+        }
+
+        div.innerHTML = `
+          <div class="match-details">
+            <strong>${teamA}</strong> vs <strong>${teamB}</strong><br>
+            <span class="small-text">Scheduled: ${scheduledTime ? new Date(scheduledTime).toLocaleString() : 'Not scheduled'}</span><br>
+            ${timerText}
+          </div>
+          <button class="delete-btn" onclick="deleteMatch('${matchId}')">Delete</button>
+        `;
+        matchList.appendChild(div);
+      });
+    } else {
+      matchList.innerHTML = '<p>No matches found.</p>';
+    }
+  });
+
+  // Delete match handler
+  window.deleteMatch = function(matchId) {
+    const matchRef = ref(database, 'matchmaking/matches/' + matchId);
+    remove(matchRef)
+      .then(() => {
+        console.log("Match deleted successfully.");
+      })
+      .catch(error => {
+        console.error("Error deleting match:", error);
+      });
+  };
 </script>
 
 </body>
