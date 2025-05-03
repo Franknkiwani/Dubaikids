@@ -86,6 +86,11 @@ button:hover {
     margin-top: 0;
   }
 }
+#countdownContainer {
+  text-align: center;
+  font-size: 16px;
+  margin-top: 10px;
+}
 </style>
 </head>
 <body>
@@ -108,6 +113,8 @@ button:hover {
     </select>
 
     <button id="saveMetaBtn">Save Settings</button>
+
+    <div id="countdownContainer"></div>
   </div>
 
   <div class="panel-box">
@@ -142,14 +149,13 @@ const seasonEndInput = document.getElementById('seasonEndInput');
 const statusSelect = document.getElementById('statusSelect');
 const saveMetaBtn = document.getElementById('saveMetaBtn');
 const teamList = document.getElementById('teamList');
+const countdownContainer = document.getElementById('countdownContainer');
 
 // Load Meta
 function loadMeta() {
-  console.log('Loading meta...');
   const metaRef = ref(db, 'championsleague/meta');
   onValue(metaRef, snapshot => {
     const meta = snapshot.val();
-    console.log('Meta loaded:', meta);
     if (meta) {
       stageInput.value = meta.stage || '';
       statusSelect.value = meta.status || 'closed';
@@ -161,44 +167,28 @@ function loadMeta() {
   });
 }
 
-// Save Meta (with console logs)
+// Save Meta
 saveMetaBtn.onclick = async () => {
-  console.log('Save button clicked');
-
   const stage = stageInput.value.trim();
-  const seasonEndVal = seasonEndInput.value;
+  const status = statusSelect.value;
+  const seasonEndISO = new Date(seasonEndInput.value).toISOString();
 
-  if (!stage || !seasonEndVal) {
-    alert('Please fill out both Stage and Season End date.');
-    console.warn('Missing input values:', { stage, seasonEndVal });
-    return;
-  }
-
-  const seasonEndISO = new Date(seasonEndVal).toISOString();
+  // Save into championsleague/meta
   const data = {
     stage: stage,
-    status: statusSelect.value,
+    status: status,
     seasonEnd: seasonEndISO
   };
+  await set(ref(db, 'championsleague/meta'), data);
 
-  console.log('Saving data:', data);
+  // Save into /seasonends (as key)
+  await set(ref(db, 'seasonends/' + seasonEndISO), true);
 
-  try {
-    await Promise.all([
-      set(ref(db, 'championsleague/meta'), data),
-      set(ref(db, 'seasonends/' + seasonEndISO), true)
-    ]);
-    console.log('Data saved successfully');
-    alert('Season settings updated!');
-  } catch (err) {
-    console.error('Error saving data:', err);
-    alert('Error saving data. Check console for details.');
-  }
+  alert('Season settings updated!');
 };
 
 // Load Teams
 function loadTeams() {
-  console.log('Loading teams...');
   const teamsRef = ref(db, 'championsleague/teams');
   onValue(teamsRef, snapshot => {
     teamList.innerHTML = '';
@@ -224,29 +214,63 @@ function loadTeams() {
       const btns = div.querySelectorAll('button');
       btns.forEach(btn => {
         btn.onclick = async () => {
-          console.log(`Button clicked: ${btn.dataset.action} on ${teamName}`);
-          try {
-            if (btn.dataset.action === 'knockout') {
-              await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: true });
+          if (btn.dataset.action === 'knockout') {
+            await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: true });
+          }
+          if (btn.dataset.action === 'revive') {
+            await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: false });
+          }
+          if (btn.dataset.action === 'delete') {
+            const confirmDel = confirm('Delete team "' + teamName + '"?');
+            if (confirmDel) {
+              await remove(ref(db, 'championsleague/teams/' + teamName));
             }
-            if (btn.dataset.action === 'revive') {
-              await update(ref(db, 'championsleague/teams/' + teamName), { knockedOut: false });
-            }
-            if (btn.dataset.action === 'delete') {
-              const confirmDel = confirm('Delete team "' + teamName + '"?');
-              if (confirmDel) {
-                await remove(ref(db, 'championsleague/teams/' + teamName));
-              }
-            }
-            console.log('Action completed');
-          } catch (err) {
-            console.error('Error updating team:', err);
           }
         };
       });
       teamList.appendChild(div);
     });
   });
+}
+
+// === SEASON COUNTDOWN ===
+let countdownInterval;
+onValue(ref(db, 'seasonends'), (snapshot) => {
+  const seasonEndsData = snapshot.val();
+  if (!seasonEndsData || Object.keys(seasonEndsData).length === 0) {
+    countdownContainer.innerHTML = "<span style='color:gray;'>Season end time not set</span>";
+    clearInterval(countdownInterval);
+    return;
+  }
+
+  const endDates = Object.keys(seasonEndsData);
+  const latestEndTime = endDates.sort().pop();
+  const endDate = new Date(latestEndTime);
+
+  clearInterval(countdownInterval);
+  updateCountdown(endDate);
+  countdownInterval = setInterval(() => updateCountdown(endDate), 1000);
+});
+
+function updateCountdown(endDate) {
+  const now = new Date();
+  const diff = endDate - now;
+  if (diff <= 0) {
+    countdownContainer.innerHTML = "<span style='color:red;'>Season has ended</span>";
+    clearInterval(countdownInterval);
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  countdownContainer.innerHTML = `
+    Season ends in <span style="color:#007bff;">
+    ${days}d ${hours}h ${minutes}m ${seconds}s
+    </span>
+  `;
 }
 
 // Init
