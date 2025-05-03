@@ -1,166 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaderboard</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Leaderboard</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #121212;
+    color: #f1f1f1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
 
-    .container {
-      width: 90%;
-      max-width: 1000px;
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    }
+  .container {
+    width: 100%;
+    max-width: 800px;
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
 
-    h1 {
-      font-size: 2.5rem;
-      text-align: center;
-      color: #ffcc00;
-      margin-bottom: 30px;
-    }
+  h1 {
+    font-size: 2.2rem;
+    text-align: center;
+    color: #ffcc00;
+    margin-bottom: 25px;
+  }
 
-    .leaderboard-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+  .card {
+    background-color: #2a2a2a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+  }
 
-    .leaderboard-table th, .leaderboard-table td {
-      padding: 12px 15px;
-      text-align: left;
-    }
+  .card:hover {
+    transform: translateY(-2px);
+  }
 
-    .leaderboard-table th {
-      background-color: #333;
-      color: white;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
+  .card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
 
-    .leaderboard-table td {
-      background-color: #f9f9f9;
-      border-bottom: 1px solid #ddd;
-    }
+  .rank {
+    font-size: 1.2rem;
+    color: #ffcc00;
+    font-weight: bold;
+  }
 
-    .leaderboard-table td:last-child {
-      text-align: center;
-    }
+  .username {
+    font-size: 1.1rem;
+    flex-grow: 1;
+    margin: 0 10px;
+    color: #f1f1f1;
+  }
 
-    .delete-btn {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+  .points {
+    font-size: 1.1rem;
+    color: #00c853;
+    font-weight: bold;
+  }
 
-    .delete-btn:hover {
-      background-color: #c0392b;
-    }
+  .delete-btn {
+    width: 100%;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+    font-size: 1rem;
+  }
 
-    #loadingIndicator {
-      text-align: center;
-      font-size: 1.5rem;
-      color: #ffcc00;
-      margin-top: 20px;
-      display: none;
-    }
+  .delete-btn:hover {
+    background-color: #c0392b;
+  }
 
-    /* Modal */
-    #confirmationModal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
+  #loadingIndicator {
+    text-align: center;
+    font-size: 1.4rem;
+    color: #ffcc00;
+    margin: 20px 0;
+  }
 
-    #confirmationModal .modal-content {
-      background-color: #333;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      width: 400px;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    }
+  /* Modal */
+  #confirmationModal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
 
-    #confirmationModal button {
-      padding: 12px 20px;
-      font-size: 1rem;
-      margin: 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+  #confirmationModal .modal-content {
+    background-color: #2a2a2a;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid #444;
+  }
 
-    .confirm-btn {
-      background-color: #27ae60;
-      color: white;
-    }
+  #confirmationModal p {
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 1.1rem;
+  }
 
-    .confirm-btn:hover {
-      background-color: #2ecc71;
-    }
+  #confirmationModal button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
 
-    .cancel-btn {
-      background-color: #e74c3c;
-      color: white;
-    }
+  .confirm-btn {
+    background-color: #27ae60;
+    color: white;
+  }
 
-    .cancel-btn:hover {
-      background-color: #c0392b;
-    }
+  .confirm-btn:hover {
+    background-color: #2ecc71;
+  }
 
-  </style>
+  .cancel-btn {
+    background-color: #e74c3c;
+    color: white;
+  }
+
+  .cancel-btn:hover {
+    background-color: #c0392b;
+  }
+
+</style>
 </head>
-<body>
 
+<body>
 <div class="container">
   <h1>Leaderboard</h1>
   <div id="loadingIndicator">Loading...</div>
-  <table id="leaderboardTable" class="leaderboard-table">
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Name</th>
-        <th>Points</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Data will load here -->
-    </tbody>
-  </table>
+  <div id="leaderboardList">
+    <!-- Cards will load here -->
+  </div>
 </div>
 
 <!-- Confirmation Modal -->
@@ -173,87 +180,89 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-    projectId: "itzhoyoo-f9f7e",
-    storageBucket: "itzhoyoo-f9f7e.appspot.com",
-    messagingSenderId: "1094792075584",
-    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-    measurementId: "G-LLT6F9WRKH"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const leaderboardRef = ref(db, 'users/');
-  const leaderboardTable = document.getElementById('leaderboardTable').getElementsByTagName('tbody')[0];
-  const loadingIndicator = document.getElementById('loadingIndicator');
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const leaderboardRef = ref(db, 'users/');
+const leaderboardList = document.getElementById('leaderboardList');
+const loadingIndicator = document.getElementById('loadingIndicator');
 
-  // Load leaderboard
-  async function loadLeaderboard() {
-    loadingIndicator.style.display = 'block'; // Show loading indicator
-    try {
-      const snapshot = await get(leaderboardRef);
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const entries = Object.entries(data)
-          .map(([key, value]) => ({ key, ...value }))
-          .sort((a, b) => b.stats?.points - a.stats?.points)
-          .slice(0, 10);
+// Load leaderboard
+async function loadLeaderboard() {
+  loadingIndicator.style.display = 'block';
+  try {
+    const snapshot = await get(leaderboardRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const entries = Object.entries(data)
+        .map(([key, value]) => ({ key, ...value }))
+        .sort((a, b) => (b.stats?.points || 0) - (a.stats?.points || 0))
+        .slice(0, 10);
 
-        leaderboardTable.innerHTML = '';
-        entries.forEach((entry, index) => {
-          const row = leaderboardTable.insertRow();
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${entry.username || 'Unknown'}</td>
-            <td>${entry.stats?.points || 0}</td>
-            <td><button class="delete-btn" onclick="showConfirmation('${entry.key}')">Delete</button></td>
-          `;
-        });
-      } else {
-        leaderboardTable.innerHTML = '<tr><td colspan="4">No data available</td></tr>';
-      }
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
-    } finally {
-      loadingIndicator.style.display = 'none'; // Hide loading indicator
+      leaderboardList.innerHTML = '';
+      entries.forEach((entry, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-content">
+            <div class="rank">#${index + 1}</div>
+            <div class="username">${entry.username || 'Unknown'}</div>
+            <div class="points">${entry.stats?.points || 0} pts</div>
+          </div>
+          <button class="delete-btn" onclick="showConfirmation('${entry.key}')">Delete</button>
+        `;
+        leaderboardList.appendChild(card);
+      });
+    } else {
+      leaderboardList.innerHTML = '<p style="text-align:center; color:#ffcc00;">No data available</p>';
     }
+  } catch (error) {
+    console.error('Error loading leaderboard:', error);
+  } finally {
+    loadingIndicator.style.display = 'none';
   }
+}
 
-  // Show confirmation modal
-  function showConfirmation(key) {
-    const modal = document.getElementById('confirmationModal');
-    const confirmBtn = document.getElementById('confirmDeleteBtn');
-    const cancelBtn = document.getElementById('cancelDeleteBtn');
+// Show confirmation modal
+function showConfirmation(key) {
+  const modal = document.getElementById('confirmationModal');
+  const confirmBtn = document.getElementById('confirmDeleteBtn');
+  const cancelBtn = document.getElementById('cancelDeleteBtn');
 
-    modal.style.display = 'flex';
+  modal.style.display = 'flex';
 
-    confirmBtn.onclick = () => deleteRecord(key);
-    cancelBtn.onclick = () => modal.style.display = 'none';
+  confirmBtn.onclick = () => deleteRecord(key);
+  cancelBtn.onclick = () => modal.style.display = 'none';
+}
+
+// Delete record
+async function deleteRecord(key) {
+  const modal = document.getElementById('confirmationModal');
+  try {
+    await remove(ref(db, 'users/' + key));
+    loadLeaderboard();
+    modal.style.display = 'none';
+  } catch (error) {
+    console.error('Error deleting record:', error);
   }
+}
 
-  // Delete record
-  async function deleteRecord(key) {
-    const modal = document.getElementById('confirmationModal');
-    try {
-      await remove(ref(db, 'users/' + key));
-      loadLeaderboard();
-      modal.style.display = 'none';
-    } catch (error) {
-      console.error('Error deleting record:', error);
-    }
-  }
-
-  // Make showConfirmation accessible globally
-  window.showConfirmation = showConfirmation;
-
-  // Load leaderboard on page load
-  window.onload = loadLeaderboard;
+// Make showConfirmation accessible globally
+window.showConfirmation = showConfirmation;
+window.onload = loadLeaderboard;
 </script>
 
 </body>
