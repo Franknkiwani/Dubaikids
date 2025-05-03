@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Match & View Matches</title>
   <style>
     body {
@@ -20,7 +21,7 @@
       display: block;
       margin-top: 15px;
     }
-    input, button {
+    select, input, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -68,6 +69,18 @@
       font-weight: bold;
       color: #f57c00;
     }
+
+    /* Mobile styling */
+    @media (max-width: 600px) {
+      body {
+        max-width: 95%;
+        margin: 20px auto;
+        padding: 15px;
+      }
+      select, input, button {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -75,17 +88,18 @@
   <h2>Create Match</h2>
 
   <form id="matchForm">
-    <label>Team A:
-      <input type="text" id="teamA" required>
-    </label>
+    <label for="teamA">Select Team A:</label>
+    <select id="teamA" required>
+      <option value="">Select Team</option>
+    </select>
 
-    <label>Team B:
-      <input type="text" id="teamB" required>
-    </label>
+    <label for="teamB">Select Team B:</label>
+    <select id="teamB" required>
+      <option value="">Select Team</option>
+    </select>
 
-    <label>Scheduled Time (optional, ISO format or timestamp):
-      <input type="text" id="scheduledTime">
-    </label>
+    <label for="scheduledTime">Scheduled Time (optional):</label>
+    <input type="datetime-local" id="scheduledTime">
 
     <button type="submit">Create Match</button>
   </form>
@@ -120,13 +134,98 @@
   const form = document.getElementById('matchForm');
   const statusText = document.getElementById('status');
   const matchList = document.getElementById('matchList');
+  const teamASelect = document.getElementById('teamA');
+  const teamBSelect = document.getElementById('teamB');
+
+  // Fetch all teams and matches
+  function fetchTeams() {
+    const teamsRef = ref(database, 'users/teams');
+    onValue(teamsRef, (snapshot) => {
+      const teams = snapshot.val();
+      if (teams) {
+        updateTeamSelects(teams);
+      }
+    });
+  }
+
+  // Fetch all matches
+  function fetchMatches() {
+    const matchesRef = ref(database, 'matchmaking/matches');
+    onValue(matchesRef, (snapshot) => {
+      matchList.innerHTML = '';  // Clear current list
+      if (snapshot.exists()) {
+        snapshot.forEach(matchSnap => {
+          const match = matchSnap.val();
+          const matchId = matchSnap.key;
+          const teamA = match.teamA;
+          const teamB = match.teamB;
+          const scheduledTime = match.scheduledTime ? new Date(match.scheduledTime).getTime() : null;
+
+          // Create match element
+          const div = document.createElement('div');
+          div.className = 'match-item';
+
+          let timerText = '';
+          if (scheduledTime) {
+            const timeLeft = Math.max(0, scheduledTime - Date.now());
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = Math.floor((timeLeft % 60000) / 1000);
+            timerText = `<span class="timer">${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+          }
+
+          div.innerHTML = `
+            <div class="match-details">
+              <strong>${teamA}</strong> vs <strong>${teamB}</strong><br>
+              <span class="small-text">Scheduled: ${scheduledTime ? new Date(scheduledTime).toLocaleString() : 'Not scheduled'}</span><br>
+              ${timerText}
+            </div>
+            <button class="delete-btn" onclick="deleteMatch('${matchId}')">Delete</button>
+          `;
+          matchList.appendChild(div);
+        });
+      } else {
+        matchList.innerHTML = '<p>No matches found.</p>';
+      }
+    });
+  }
+
+  // Update the team dropdowns
+  function updateTeamSelects(teams) {
+    const usedTeams = new Set();
+    const matchesRef = ref(database, 'matchmaking/matches');
+    onValue(matchesRef, (snapshot) => {
+      snapshot.forEach(matchSnap => {
+        const match = matchSnap.val();
+        usedTeams.add(match.teamA);
+        usedTeams.add(match.teamB);
+      });
+
+      // Populate team dropdowns
+      teamASelect.innerHTML = '<option value="">Select Team</option>';
+      teamBSelect.innerHTML = '<option value="">Select Team</option>';
+
+      for (const teamName in teams) {
+        if (!usedTeams.has(teamName)) {
+          const option = document.createElement('option');
+          option.value = teamName;
+          option.textContent = teamName;
+          teamASelect.appendChild(option);
+
+          const optionB = document.createElement('option');
+          optionB.value = teamName;
+          optionB.textContent = teamName;
+          teamBSelect.appendChild(optionB);
+        }
+      }
+    });
+  }
 
   // Create match handler
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    const teamA = document.getElementById('teamA').value.trim();
-    const teamB = document.getElementById('teamB').value.trim();
+    const teamA = teamASelect.value.trim();
+    const teamB = teamBSelect.value.trim();
     const scheduledInput = document.getElementById('scheduledTime').value.trim();
 
     if (!teamA || !teamB) {
@@ -136,12 +235,12 @@
 
     let scheduledTime = null;
     if (scheduledInput) {
-      const parsedTime = Date.parse(scheduledInput);
-      scheduledTime = isNaN(parsedTime) ? Number(scheduledInput) : parsedTime;
-      if (isNaN(scheduledTime)) {
+      const parsedTime = new Date(scheduledInput).getTime();
+      if (isNaN(parsedTime)) {
         statusText.textContent = 'Invalid scheduled time.';
         return;
       }
+      scheduledTime = parsedTime;
     }
 
     const matchData = { teamA, teamB };
@@ -155,50 +254,12 @@
       .then(() => {
         statusText.textContent = 'Match created successfully!';
         form.reset();
+        fetchMatches();
       })
       .catch(error => {
         console.error('Error saving match:', error);
         statusText.textContent = 'Error saving match.';
       });
-  });
-
-  // Load and display matches with delete option and countdown timer
-  const matchesRef = ref(database, 'matchmaking/matches');
-  onValue(matchesRef, (snapshot) => {
-    matchList.innerHTML = '';  // Clear current list
-    if (snapshot.exists()) {
-      snapshot.forEach(matchSnap => {
-        const match = matchSnap.val();
-        const matchId = matchSnap.key;
-        const teamA = match.teamA;
-        const teamB = match.teamB;
-        const scheduledTime = match.scheduledTime ? new Date(match.scheduledTime).getTime() : null;
-        
-        // Create match element
-        const div = document.createElement('div');
-        div.className = 'match-item';
-
-        let timerText = '';
-        if (scheduledTime) {
-          const timeLeft = Math.max(0, scheduledTime - Date.now());
-          const minutes = Math.floor(timeLeft / 60000);
-          const seconds = Math.floor((timeLeft % 60000) / 1000);
-          timerText = `<span class="timer">${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
-        }
-
-        div.innerHTML = `
-          <div class="match-details">
-            <strong>${teamA}</strong> vs <strong>${teamB}</strong><br>
-            <span class="small-text">Scheduled: ${scheduledTime ? new Date(scheduledTime).toLocaleString() : 'Not scheduled'}</span><br>
-            ${timerText}
-          </div>
-          <button class="delete-btn" onclick="deleteMatch('${matchId}')">Delete</button>
-        `;
-        matchList.appendChild(div);
-      });
-    } else {
-      matchList.innerHTML = '<p>No matches found.</p>';
-    }
   });
 
   // Delete match handler
@@ -207,11 +268,16 @@
     remove(matchRef)
       .then(() => {
         console.log("Match deleted successfully.");
+        fetchMatches(); // Refresh matches list
       })
       .catch(error => {
         console.error("Error deleting match:", error);
       });
   };
+
+  // Fetch all teams and matches on load
+  fetchTeams();
+  fetchMatches();
 </script>
 
 </body>
