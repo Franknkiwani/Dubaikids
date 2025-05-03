@@ -1,94 +1,71 @@
 <!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Fixtures</title>
+<title>Fixtures Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-* {
-  box-sizing: border-box;
-  user-select: none;
-}
 body {
   margin: 0;
-  font-family: 'Arial', sans-serif;
+  padding: 0;
   background: #121212;
-  color: #f1f1f1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
+  color: #f0f0f0;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .container {
-  width: 100%;
-  max-width: 400px;
-}
-form, .fixtures {
-  background: #1e1e1e;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-  margin-bottom: 20px;
-}
-label {
-  display: block;
-  margin-top: 12px;
-  margin-bottom: 5px;
+  width: 80%;
+  margin: auto;
+  padding-top: 20px;
 }
 input, select, button {
-  width: 100%;
+  width: 80%;
   padding: 12px;
+  margin: 10px 0;
   border: none;
   border-radius: 8px;
-  margin-bottom: 12px;
-  background: #2a2a2a;
-  color: #fff;
   font-size: 16px;
+}
+input, select {
+  background: #1e1e1e;
+  color: #f0f0f0;
 }
 button {
   background: #007bff;
+  color: white;
   font-weight: bold;
+  cursor: pointer;
 }
 button:hover {
   background: #0056b3;
 }
 .fixture {
-  background: #2a2a2a;
-  padding: 12px;
+  background: #1e1e1e;
   border-radius: 8px;
-  margin-bottom: 10px;
+  margin: 15px 0;
+  padding: 15px;
+  text-align: left;
 }
-.fixture span {
-  display: block;
-  margin-bottom: 4px;
+.fixture-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }
-.move-btn {
-  background: #28a745;
-  margin-top: 8px;
-}
-.move-btn:hover {
-  background: #1e7e34;
+.fixture-actions button {
+  width: 48%;
 }
 </style>
 </head>
 <body>
 <div class="container">
-  <h2 style="text-align:center">Add Fixture</h2>
-  <form id="fixtureForm">
-    <label>Team A (Owner)</label>
-    <select id="teamASelect" required></select><label>Team B (Owner)</label>
-<select id="teamBSelect" required></select>
+  <h2>Upcoming Fixtures Manager</h2><select id="teamASelect"></select> <select id="teamBSelect"></select> <input type="datetime-local" id="fixtureDate"> <button onclick="addFixture()">Add Fixture</button>
 
-<label>Fixture Date & Time</label>
-<input type="datetime-local" id="fixtureDate" required>
-
-<button type="submit">Add Fixture</button>
-
-  </form>  <h2 style="text-align:center">Upcoming Fixtures</h2>
-  <div class="fixtures" id="fixturesList"></div>
-</div><script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-
+  <h3>Upcoming Fixtures</h3>
+  <div id="fixturesList"></div>
+</div><script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-database-compat.js"></script><script>
 const firebaseConfig = {
   apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
   authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -98,110 +75,114 @@ const firebaseConfig = {
   messagingSenderId: "1094792075584",
   appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5"
 };
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 const teamASelect = document.getElementById('teamASelect');
 const teamBSelect = document.getElementById('teamBSelect');
-const fixtureForm = document.getElementById('fixtureForm');
 const fixturesList = document.getElementById('fixturesList');
 
-// Load available teams (not already in upcomingFixtures)
 function loadTeams() {
-  get(ref(db, 'users')).then(snapshot => {
+  firebase.database().ref('users').once('value', snapshot => {
     const allTeams = [];
-    snapshot.forEach(child => {
-      const data = child.val();
+    snapshot.forEach(userSnap => {
+      const data = userSnap.val();
       allTeams.push({ username: data.username, team: data.team });
     });
 
-    get(ref(db, 'upcomingfixtures')).then(fixSnap => {
-      const usedTeams = [];
-      fixSnap.forEach(fix => {
-        const data = fix.val();
-        usedTeams.push(data.teamA, data.teamB);
+    firebase.database().ref('upcomingfixtures').once('value', fixtureSnap => {
+      const busyTeams = [];
+      fixtureSnap.forEach(fix => {
+        busyTeams.push(fix.val().teamA);
+        busyTeams.push(fix.val().teamB);
       });
 
-      const available = allTeams.filter(t => !usedTeams.includes(t.team));
-
-      [teamASelect, teamBSelect].forEach(select => {
-        select.innerHTML = '<option value="">Select</option>';
-        available.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = JSON.stringify(t);
-          opt.textContent = `${t.team} (${t.username})`;
-          select.appendChild(opt);
-        });
-      });
+      const availableTeams = allTeams.filter(t => !busyTeams.includes(t.team));
+      populateDropdowns(availableTeams);
     });
   });
 }
 
-// Add fixture
-fixtureForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const a = JSON.parse(teamASelect.value);
-  const b = JSON.parse(teamBSelect.value);
-  const date = new Date(document.getElementById('fixtureDate').value).toISOString();
-  const key = Date.now();
+function populateDropdowns(teams) {
+  [teamASelect, teamBSelect].forEach(select => {
+    select.innerHTML = '<option value="">Select Team</option>';
+    teams.forEach(t => {
+      const option = document.createElement('option');
+      option.value = JSON.stringify(t);
+      option.textContent = t.team;
+      select.appendChild(option);
+    });
+  });
+}
 
-  if (a.team === b.team) {
-    alert('Teams cannot be the same'); return;
+function addFixture() {
+  const teamA = JSON.parse(teamASelect.value || null);
+  const teamB = JSON.parse(teamBSelect.value || null);
+  const date = document.getElementById('fixtureDate').value;
+
+  if (!teamA || !teamB || teamA.team === teamB.team || !date) {
+    alert('Select valid distinct teams and date');
+    return;
   }
 
-  set(ref(db, 'upcomingfixtures/' + key), {
-    teamA: a.team,
-    ownerA: a.username,
-    teamB: b.team,
-    ownerB: b.username,
+  const fixtureRef = firebase.database().ref('upcomingfixtures').push();
+  fixtureRef.set({
+    ownerA: teamA.username,
+    teamA: teamA.team,
+    ownerB: teamB.username,
+    teamB: teamB.team,
     date: date
   }).then(() => {
-    fixtureForm.reset();
+    loadFixtures();
     loadTeams();
   });
-});
+}
 
-// Load fixtures and show buttons
 function loadFixtures() {
-  onValue(ref(db, 'upcomingfixtures'), snap => {
+  fixturesList.innerHTML = '';
+  firebase.database().ref('upcomingfixtures').on('value', snapshot => {
     fixturesList.innerHTML = '';
-    const now = new Date();
-
-    snap.forEach(child => {
-      const key = child.key;
-      const data = child.val();
-      const fixtureEl = document.createElement('div');
-      fixtureEl.className = 'fixture';
-      const fixtureDate = new Date(data.date);
-
-      fixtureEl.innerHTML = `
-        <span><b>${data.teamA}</b> (${data.ownerA}) vs <b>${data.teamB}</b> (${data.ownerB})</span>
-        <span>Date: ${fixtureDate.toLocaleString()}</span>
+    snapshot.forEach(fixSnap => {
+      const fix = fixSnap.val();
+      const id = fixSnap.key;
+      const div = document.createElement('div');
+      div.className = 'fixture';
+      div.innerHTML = `
+        <strong>${fix.teamA}</strong> (Owner: ${fix.ownerA}) <br>
+        VS <br>
+        <strong>${fix.teamB}</strong> (Owner: ${fix.ownerB}) <br>
+        Date: ${new Date(fix.date).toLocaleString()}
+        <div class="fixture-actions">
+          <button onclick="moveToPrevious('${id}')">Move to Previous</button>
+          <button onclick="deleteFixture('${id}')">Delete</button>
+        </div>
       `;
-
-      if (fixtureDate < now) {
-        const moveBtn = document.createElement('button');
-        moveBtn.className = 'move-btn';
-        moveBtn.textContent = 'Move to Previous';
-        moveBtn.onclick = () => moveToPrevious(key, data);
-        fixtureEl.appendChild(moveBtn);
-      }
-
-      fixturesList.appendChild(fixtureEl);
+      fixturesList.appendChild(div);
     });
-
-    loadTeams();
   });
 }
 
-function moveToPrevious(key, data) {
-  const prevRef = ref(db, 'previousfixtures/' + key);
-  set(prevRef, data).then(() => {
-    remove(ref(db, 'upcomingfixtures/' + key));
+function deleteFixture(id) {
+  if (confirm('Delete this fixture?')) {
+    firebase.database().ref('upcomingfixtures/' + id).remove().then(() => {
+      loadFixtures();
+      loadTeams();
+    });
+  }
+}
+
+function moveToPrevious(id) {
+  firebase.database().ref('upcomingfixtures/' + id).once('value', snap => {
+    const data = snap.val();
+    firebase.database().ref('previousfixtures/' + id).set(data).then(() => {
+      deleteFixture(id);
+    });
   });
 }
 
-loadTeams();
-loadFixtures();
+document.addEventListener('DOMContentLoaded', () => {
+  loadTeams();
+  loadFixtures();
+});
 </script></body>
 </html>
