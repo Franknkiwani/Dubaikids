@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Upcoming Fixtures</title>
+  <title>Add Upcoming Fixture</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
       min-height: 100vh;
     }
     h1 {
@@ -23,15 +23,13 @@
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    .form-container label {
-      display: block;
+    label {
       margin-top: 15px;
       font-weight: bold;
       color: #333;
+      display: block;
     }
-    .form-container select,
-    .form-container input,
-    .form-container button {
+    select, input, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -39,33 +37,40 @@
       border-radius: 6px;
       font-size: 16px;
     }
+    .teamDisplay {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #555;
+    }
     button {
-      background-color: #007bff;
+      background-color: #28a745;
       color: white;
       margin-top: 20px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: #218838;
     }
   </style>
 </head>
 <body>
-  <h1>Upcoming Fixture Submission</h1>
+  <h1>Add Upcoming Fixture</h1>
   <div class="form-container">
     <form id="fixtureForm">
-      <label for="teamA">Team A:</label>
-      <select id="teamA" name="teamA" required>
-        <option value="">Select Team A</option>
+      <label for="ownerA">Owner A (User):</label>
+      <select id="ownerA" required>
+        <option value="">Select Owner A</option>
       </select>
+      <div id="teamADisplay" class="teamDisplay"></div>
 
-      <label for="teamB">Team B:</label>
-      <select id="teamB" name="teamB" required>
-        <option value="">Select Team B</option>
+      <label for="ownerB">Owner B (User):</label>
+      <select id="ownerB" required>
+        <option value="">Select Owner B</option>
       </select>
+      <div id="teamBDisplay" class="teamDisplay"></div>
 
       <label for="date">Fixture Date:</label>
-      <input type="datetime-local" id="date" name="date" required>
+      <input type="datetime-local" id="date" required>
 
       <button type="submit">Add Fixture</button>
     </form>
@@ -73,7 +78,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -91,75 +96,103 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // Elements
-const teamASelect = document.getElementById('teamA');
-const teamBSelect = document.getElementById('teamB');
+const ownerASelect = document.getElementById('ownerA');
+const ownerBSelect = document.getElementById('ownerB');
+const teamADisplay = document.getElementById('teamADisplay');
+const teamBDisplay = document.getElementById('teamBDisplay');
 const fixtureForm = document.getElementById('fixtureForm');
 
-// Fetch teams from users
-async function fetchTeams() {
+// Global users data
+let usersData = {}; 
+
+async function fetchUsers() {
   const usersRef = ref(db, 'users');
   try {
     const snapshot = await get(usersRef);
     if (snapshot.exists()) {
-      const users = snapshot.val();
-      const teams = [];
+      usersData = snapshot.val();
 
-      Object.values(users).forEach(user => {
-        if (user.team && user.username) {
-          teams.push({ team: user.team, owner: user.username });
-        }
-      });
-
-      // Populate dropdowns
-      teams.forEach(({ team, owner }) => {
+      Object.values(usersData).forEach(user => {
         const optionA = document.createElement('option');
-        optionA.value = JSON.stringify({ team, owner }); // Save both team & owner
-        optionA.textContent = `${team} (${owner})`;
+        optionA.value = user.username;
+        optionA.textContent = user.username;
 
         const optionB = optionA.cloneNode(true);
 
-        teamASelect.appendChild(optionA);
-        teamBSelect.appendChild(optionB);
+        ownerASelect.appendChild(optionA);
+        ownerBSelect.appendChild(optionB);
       });
     }
   } catch (error) {
-    alert("Error fetching teams: " + error.message);
+    alert("Error fetching users: " + error.message);
     console.error(error);
   }
 }
 
-fetchTeams();
+// Auto-display team when user selected
+function updateTeamDisplay(selectEl, displayEl) {
+  const username = selectEl.value;
+  const user = Object.values(usersData).find(u => u.username === username);
+  if (user) {
+    displayEl.textContent = `Team: ${user.team}`;
+  } else {
+    displayEl.textContent = "";
+  }
+}
+
+ownerASelect.addEventListener('change', () => updateTeamDisplay(ownerASelect, teamADisplay));
+ownerBSelect.addEventListener('change', () => updateTeamDisplay(ownerBSelect, teamBDisplay));
+
+fetchUsers();
 
 // Handle form submit
 fixtureForm.addEventListener('submit', (e) => {
   e.preventDefault();
 
-  const teamAData = JSON.parse(teamASelect.value);
-  const teamBData = JSON.parse(teamBSelect.value);
+  const ownerA = ownerASelect.value;
+  const ownerB = ownerBSelect.value;
   const dateInput = document.getElementById('date').value;
 
-  // Validate that A != B
-  if (teamAData.team === teamBData.team) {
-    alert("Team A and Team B cannot be the same!");
+  if (!ownerA || !ownerB || !dateInput) {
+    alert('Please fill all fields!');
     return;
   }
 
-  const date = new Date(dateInput).toISOString();
-  const fixtureId = 'fixture-' + Date.now();
-  const fixtureRef = ref(db, 'fixtures/' + fixtureId);
+  if (ownerA === ownerB) {
+    alert('Owner A and Owner B must be different users!');
+    return;
+  }
 
-  set(fixtureRef, {
-    teamA: teamAData.team,
-    ownerA: teamAData.owner,
-    teamB: teamBData.team,
-    ownerB: teamBData.owner,
-    date: date
-  }).then(() => {
-    alert('Fixture added successfully!');
-    fixtureForm.reset();
-  }).catch((error) => {
-    alert('Error adding fixture: ' + error.message);
-  });
+  // Get teams
+  const userA = Object.values(usersData).find(u => u.username === ownerA);
+  const userB = Object.values(usersData).find(u => u.username === ownerB);
+
+  if (!userA || !userB) {
+    alert('Error: user data not found.');
+    return;
+  }
+
+  const fixtureData = {
+    date: new Date(dateInput).toISOString(),
+    ownerA: ownerA,
+    teamA: userA.team,
+    ownerB: ownerB,
+    teamB: userB.team
+  };
+
+  const fixtureId = 'fixture-' + Date.now();
+  const fixtureRef = ref(db, 'upcomingFixtures/' + fixtureId);
+
+  set(fixtureRef, fixtureData)
+    .then(() => {
+      alert('Fixture added successfully!');
+      fixtureForm.reset();
+      teamADisplay.textContent = "";
+      teamBDisplay.textContent = "";
+    })
+    .catch((error) => {
+      alert('Error adding fixture: ' + error.message);
+    });
 });
 </script>
 
