@@ -175,8 +175,8 @@
 
     // Save to both locations
     await Promise.all([
-      set(ref(db, 'championsleague/meta'), data),
-      set(ref(db, 'championsleague/seasonends'), seasonEndISO)
+      set(ref(db, 'championsleague/meta'), data),             // Saves to 'championsleague/meta'
+      set(ref(db, 'seasonends/' + seasonEndISO), true)         // Saves to 'seasonends' root, only seasonEnd as key
     ]);
 
     alert('Season settings updated!');
