@@ -1,134 +1,91 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
 <title>Fixture Manager</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
   body {
-    margin: 0;
-    padding: 0;
-    background: #0f0c29;  /* Dark gradient cyberpunk */
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    font-family: 'Orbitron', sans-serif;
-    color: #00ffe7;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 40px;
+    margin: 40px;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
   }
 
-  .container {
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #00ffe7;
-    border-radius: 15px;
-    padding: 30px;
-    width: 100%;
-    max-width: 800px;
-    box-shadow: 0 0 20px #00ffe7;
-  }
-
-  h1 {
-    text-align: center;
-    color: #ff00ff;
-    margin-bottom: 30px;
-  }
-
-  label {
-    color: #00ffe7;
+  h1, h2 {
+    color: #ffffff;
   }
 
   select, input, button {
+    display: block;
     width: 100%;
-    padding: 12px;
-    margin: 8px 0 20px;
-    border: 2px solid #00ffe7;
-    border-radius: 8px;
-    background: #111;
-    color: #00ffe7;
+    max-width: 400px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
     font-size: 16px;
   }
 
   button {
-    background: #ff00ff;
-    color: #fff;
-    cursor: pointer;
-    transition: 0.3s;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    transition: background 0.3s;
   }
 
   button:hover {
-    background: #d100d1;
+    background-color: #0056b3;
   }
 
-  .team-display {
-    margin-top: -10px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    color: #ff00ff;
-  }
-
-  .fixture-list {
-    margin-top: 40px;
-  }
-
-  .fixture-card {
-    background: #111;
-    border: 1px solid #00ffe7;
-    border-radius: 10px;
-    padding: 15px;
+  .fixture {
     margin-bottom: 20px;
-    box-shadow: 0 0 10px #00ffe7;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
   }
 
-  .fixture-card h3 {
-    color: #ff00ff;
+  .fixture-title {
+    font-weight: bold;
+    font-size: 18px;
     margin-bottom: 5px;
   }
 
-  .fixture-card p {
-    margin: 4px 0;
-    color: #00ffe7;
+  .fixture-info {
+    margin-bottom: 8px;
   }
 
-  .fixture-card button {
+  .buttons {
+    margin-top: 8px;
+  }
+
+  .buttons button {
     width: auto;
     margin-right: 10px;
-    margin-top: 10px;
   }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>Fixture Manager</h1>
-  <form id="fixtureForm">
-    <label for="userA">Select Team A (Owner):</label>
-    <select id="userA" required>
-      <option value="">-- Select Team A --</option>
-    </select>
-    <div id="teamADisplay" class="team-display"></div>
+<h1>Fixture Manager</h1>
 
-    <label for="userB">Select Team B (Owner):</label>
-    <select id="userB" required>
-      <option value="">-- Select Team B --</option>
-    </select>
-    <div id="teamBDisplay" class="team-display"></div>
+<form id="fixtureForm">
+  <label for="userA">Select Team A (Owner):</label>
+  <select id="userA" required></select>
+  <div id="teamADisplay"></div>
 
-    <label for="date">Fixture Date:</label>
-    <input type="datetime-local" id="date" name="date" required>
+  <label for="userB">Select Team B (Owner):</label>
+  <select id="userB" required></select>
+  <div id="teamBDisplay"></div>
 
-    <button type="submit">Add Fixture</button>
-  </form>
+  <label for="date">Fixture Date:</label>
+  <input type="datetime-local" id="date" required>
 
-  <div class="fixture-list" id="fixtureList">
-    <h2>Upcoming Fixtures</h2>
-    <!-- Fixture cards will load here -->
-  </div>
-</div>
+  <button type="submit">Add Fixture</button>
+</form>
+
+<h2>Upcoming Fixtures</h2>
+<div id="fixtureList"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
@@ -158,7 +115,6 @@ const fixtureList = document.getElementById('fixtureList');
 let usersData = {};
 let currentFixtures = {};
 
-// Load all users
 async function loadUsers() {
   const usersRef = ref(db, 'users');
   const snapshot = await get(usersRef);
@@ -168,7 +124,6 @@ async function loadUsers() {
   }
 }
 
-// Load all fixtures
 async function loadFixtures() {
   const fixturesRef = ref(db, 'upcomingfixtures');
   const snapshot = await get(fixturesRef);
@@ -177,7 +132,6 @@ async function loadFixtures() {
   populateDropdowns();
 }
 
-// Populate dropdowns excluding teams in fixtures
 function populateDropdowns() {
   const usedUserIds = new Set();
   Object.values(currentFixtures).forEach(fixture => {
@@ -189,22 +143,20 @@ function populateDropdowns() {
     }
   });
 
-  const options = Object.keys(usersData)
-    .filter(uid => !usedUserIds.has(uid))
-    .map(uid => ({ uid, username: usersData[uid].username }));
+  const availableUsers = Object.keys(usersData).filter(uid => !usedUserIds.has(uid));
 
-  const buildOptions = (select, label) => {
-    select.innerHTML = `<option value="">-- Select ${label} --</option>`;
-    options.forEach(opt => {
+  const buildOptions = (select) => {
+    select.innerHTML = `<option value="">-- Select User --</option>`;
+    availableUsers.forEach(uid => {
       const option = document.createElement('option');
-      option.value = opt.uid;
-      option.textContent = opt.username;
+      option.value = uid;
+      option.textContent = usersData[uid].username;
       select.appendChild(option);
     });
   };
 
-  buildOptions(userASelect, "Team A");
-  buildOptions(userBSelect, "Team B");
+  buildOptions(userASelect);
+  buildOptions(userBSelect);
 }
 
 userASelect.addEventListener('change', () => {
@@ -240,48 +192,65 @@ fixtureForm.addEventListener('submit', async (e) => {
 
   const fixtureId = 'fixture-' + Date.now();
   const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
-
   await set(fixtureRef, fixtureData);
+
   fixtureForm.reset();
   teamADisplay.textContent = "";
   teamBDisplay.textContent = "";
   await loadFixtures();
 });
 
-// Display all fixtures
 function displayFixtures() {
-  fixtureList.innerHTML = '<h2>Upcoming Fixtures</h2>';
+  fixtureList.innerHTML = '';
   if (!Object.keys(currentFixtures).length) {
-    fixtureList.innerHTML += "<p>No fixtures available.</p>";
+    fixtureList.innerHTML = "<p>No fixtures available.</p>";
     return;
   }
 
   Object.entries(currentFixtures).forEach(([id, fixture]) => {
-    const card = document.createElement('div');
-    card.className = 'fixture-card';
-    card.innerHTML = `
-      <h3>${fixture.teamA} VS ${fixture.teamB}</h3>
-      <p><strong>Owner A:</strong> ${fixture.ownerA}</p>
-      <p><strong>Owner B:</strong> ${fixture.ownerB}</p>
-      <p><strong>Date:</strong> ${new Date(fixture.date).toLocaleString()}</p>
-      <button onclick="editFixture('${id}')">Edit Date</button>
-      <button onclick="deleteFixture('${id}')">Delete</button>
+    const div = document.createElement('div');
+    div.className = 'fixture';
+    div.innerHTML = `
+      <div class="fixture-title">${fixture.teamA} vs ${fixture.teamB}</div>
+      <div class="fixture-info"><strong>Owner A:</strong> ${fixture.ownerA}</div>
+      <div class="fixture-info"><strong>Owner B:</strong> ${fixture.ownerB}</div>
+      <div class="fixture-info"><strong>Date:</strong> ${new Date(fixture.date).toLocaleString()}</div>
+      <div class="buttons">
+        <button onclick="editFixture('${id}')">Edit Date</button>
+        <button onclick="deleteFixture('${id}')">Delete</button>
+      </div>
     `;
-    fixtureList.appendChild(card);
+    fixtureList.appendChild(div);
   });
 }
 
-// Edit fixture date
 window.editFixture = async (fixtureId) => {
-  const newDate = prompt('Enter new date and time (YYYY-MM-DDTHH:MM):');
-  if (newDate) {
-    const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
-    await update(fixtureRef, { date: new Date(newDate).toISOString() });
-    await loadFixtures();
-  }
+  const newInput = document.createElement('input');
+  newInput.type = 'datetime-local';
+  newInput.style.background = '#1e1e1e';
+  newInput.style.color = '#e0e0e0';
+  newInput.style.border = '1px solid #333';
+  newInput.style.padding = '5px';
+  const confirmBtn = document.createElement('button');
+  confirmBtn.textContent = 'Save Date';
+  confirmBtn.style.marginTop = '5px';
+
+  const container = document.createElement('div');
+  container.appendChild(newInput);
+  container.appendChild(confirmBtn);
+
+  const fixtureDiv = event.target.parentNode.parentNode;
+  fixtureDiv.appendChild(container);
+
+  confirmBtn.addEventListener('click', async () => {
+    if (newInput.value) {
+      const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
+      await update(fixtureRef, { date: new Date(newInput.value).toISOString() });
+      await loadFixtures();
+    }
+  });
 };
 
-// Delete fixture
 window.deleteFixture = async (fixtureId) => {
   if (confirm('Are you sure you want to delete this fixture?')) {
     const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
