@@ -1,62 +1,110 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Upcoming Fixtures</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fixture Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    .form-container {
-      max-width: 400px;
-      margin: 0 auto;
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+  body {
+    margin: 0;
+    padding: 0;
+    background: #0f0c29;  /* Dark gradient cyberpunk */
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    font-family: 'Orbitron', sans-serif;
+    color: #00ffe7;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
 
-    .form-container label {
-      display: block;
-      margin-bottom: 5px;
-    }
+  .container {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00ffe7;
+    border-radius: 15px;
+    padding: 30px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 0 20px #00ffe7;
+  }
 
-    .form-container select,
-    .form-container input,
-    .form-container button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
+  h1 {
+    text-align: center;
+    color: #ff00ff;
+    margin-bottom: 30px;
+  }
 
-    button {
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
+  label {
+    color: #00ffe7;
+  }
 
-    button:hover {
-      background-color: #0056b3;
-    }
+  select, input, button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 20px;
+    border: 2px solid #00ffe7;
+    border-radius: 8px;
+    background: #111;
+    color: #00ffe7;
+    font-size: 16px;
+  }
 
-    .team-display {
-      margin-top: -5px;
-      margin-bottom: 10px;
-      font-size: 14px;
-      color: #333;
-      font-weight: bold;
-    }
-  </style>
+  button {
+    background: #ff00ff;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #d100d1;
+  }
+
+  .team-display {
+    margin-top: -10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #ff00ff;
+  }
+
+  .fixture-list {
+    margin-top: 40px;
+  }
+
+  .fixture-card {
+    background: #111;
+    border: 1px solid #00ffe7;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px #00ffe7;
+  }
+
+  .fixture-card h3 {
+    color: #ff00ff;
+    margin-bottom: 5px;
+  }
+
+  .fixture-card p {
+    margin: 4px 0;
+    color: #00ffe7;
+  }
+
+  .fixture-card button {
+    width: auto;
+    margin-right: 10px;
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
 
-<h1>Upcoming Fixture Submission</h1>
-<div class="form-container">
+<div class="container">
+  <h1>Fixture Manager</h1>
   <form id="fixtureForm">
     <label for="userA">Select Team A (Owner):</label>
     <select id="userA" required>
@@ -75,113 +123,175 @@
 
     <button type="submit">Add Fixture</button>
   </form>
+
+  <div class="fixture-list" id="fixtureList">
+    <h2>Upcoming Fixtures</h2>
+    <!-- Fixture cards will load here -->
+  </div>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-    projectId: "itzhoyoo-f9f7e",
-    storageBucket: "itzhoyoo-f9f7e.appspot.com",
-    messagingSenderId: "1094792075584",
-    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-    measurementId: "G-LLT6F9WRKH"
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const userASelect = document.getElementById('userA');
+const userBSelect = document.getElementById('userB');
+const teamADisplay = document.getElementById('teamADisplay');
+const teamBDisplay = document.getElementById('teamBDisplay');
+const fixtureForm = document.getElementById('fixtureForm');
+const fixtureList = document.getElementById('fixtureList');
+
+let usersData = {};
+let currentFixtures = {};
+
+// Load all users
+async function loadUsers() {
+  const usersRef = ref(db, 'users');
+  const snapshot = await get(usersRef);
+  if (snapshot.exists()) {
+    usersData = snapshot.val();
+    populateDropdowns();
+  }
+}
+
+// Load all fixtures
+async function loadFixtures() {
+  const fixturesRef = ref(db, 'upcomingfixtures');
+  const snapshot = await get(fixturesRef);
+  currentFixtures = snapshot.exists() ? snapshot.val() : {};
+  displayFixtures();
+  populateDropdowns();
+}
+
+// Populate dropdowns excluding teams in fixtures
+function populateDropdowns() {
+  const usedUserIds = new Set();
+  Object.values(currentFixtures).forEach(fixture => {
+    for (const userId in usersData) {
+      const user = usersData[userId];
+      if (user.username === fixture.ownerA || user.username === fixture.ownerB) {
+        usedUserIds.add(userId);
+      }
+    }
+  });
+
+  const options = Object.keys(usersData)
+    .filter(uid => !usedUserIds.has(uid))
+    .map(uid => ({ uid, username: usersData[uid].username }));
+
+  const buildOptions = (select, label) => {
+    select.innerHTML = `<option value="">-- Select ${label} --</option>`;
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt.uid;
+      option.textContent = opt.username;
+      select.appendChild(option);
+    });
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  buildOptions(userASelect, "Team A");
+  buildOptions(userBSelect, "Team B");
+}
 
-  const userASelect = document.getElementById('userA');
-  const userBSelect = document.getElementById('userB');
-  const teamADisplay = document.getElementById('teamADisplay');
-  const teamBDisplay = document.getElementById('teamBDisplay');
-  const fixtureForm = document.getElementById('fixtureForm');
+userASelect.addEventListener('change', () => {
+  const userId = userASelect.value;
+  teamADisplay.textContent = userId ? 'Team: ' + usersData[userId].team : "";
+});
+userBSelect.addEventListener('change', () => {
+  const userId = userBSelect.value;
+  teamBDisplay.textContent = userId ? 'Team: ' + usersData[userId].team : "";
+});
 
-  let usersData = {};
+fixtureForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const userAId = userASelect.value;
+  const userBId = userBSelect.value;
+  const dateInput = document.getElementById('date').value;
 
-  // Load users and populate dropdowns
-  function loadUsers() {
-    const usersRef = ref(db, 'users');
-    get(usersRef).then(snapshot => {
-      if (snapshot.exists()) {
-        usersData = snapshot.val();
-        userASelect.innerHTML = '<option value="">-- Select Team A --</option>';
-        userBSelect.innerHTML = '<option value="">-- Select Team B --</option>';
-        Object.keys(usersData).forEach(userId => {
-          const user = usersData[userId];
-          const optionA = document.createElement('option');
-          optionA.value = userId;
-          optionA.textContent = user.username;
-          const optionB = optionA.cloneNode(true);
-          userASelect.appendChild(optionA);
-          userBSelect.appendChild(optionB);
-        });
-      }
-    });
+  if (!userAId || !userBId || userAId === userBId) {
+    alert('Please select two different teams.');
+    return;
   }
 
-  // Display team name when user is selected
-  userASelect.addEventListener('change', () => {
-    const userId = userASelect.value;
-    if (userId && usersData[userId]) {
-      teamADisplay.textContent = 'Team: ' + usersData[userId].team;
-    } else {
-      teamADisplay.textContent = "";
-    }
+  const userA = usersData[userAId];
+  const userB = usersData[userBId];
+
+  const fixtureData = {
+    date: new Date(dateInput).toISOString(),
+    ownerA: userA.username,
+    teamA: userA.team,
+    ownerB: userB.username,
+    teamB: userB.team
+  };
+
+  const fixtureId = 'fixture-' + Date.now();
+  const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
+
+  await set(fixtureRef, fixtureData);
+  fixtureForm.reset();
+  teamADisplay.textContent = "";
+  teamBDisplay.textContent = "";
+  await loadFixtures();
+});
+
+// Display all fixtures
+function displayFixtures() {
+  fixtureList.innerHTML = '<h2>Upcoming Fixtures</h2>';
+  if (!Object.keys(currentFixtures).length) {
+    fixtureList.innerHTML += "<p>No fixtures available.</p>";
+    return;
+  }
+
+  Object.entries(currentFixtures).forEach(([id, fixture]) => {
+    const card = document.createElement('div');
+    card.className = 'fixture-card';
+    card.innerHTML = `
+      <h3>${fixture.teamA} VS ${fixture.teamB}</h3>
+      <p><strong>Owner A:</strong> ${fixture.ownerA}</p>
+      <p><strong>Owner B:</strong> ${fixture.ownerB}</p>
+      <p><strong>Date:</strong> ${new Date(fixture.date).toLocaleString()}</p>
+      <button onclick="editFixture('${id}')">Edit Date</button>
+      <button onclick="deleteFixture('${id}')">Delete</button>
+    `;
+    fixtureList.appendChild(card);
   });
+}
 
-  userBSelect.addEventListener('change', () => {
-    const userId = userBSelect.value;
-    if (userId && usersData[userId]) {
-      teamBDisplay.textContent = 'Team: ' + usersData[userId].team;
-    } else {
-      teamBDisplay.textContent = "";
-    }
-  });
-
-  fixtureForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const userAId = userASelect.value;
-    const userBId = userBSelect.value;
-    const dateInput = document.getElementById('date').value;
-
-    if (!userAId || !userBId || userAId === userBId) {
-      alert('Please select two different teams.');
-      return;
-    }
-
-    const userA = usersData[userAId];
-    const userB = usersData[userBId];
-
-    const fixtureData = {
-      date: new Date(dateInput).toISOString(),
-      ownerA: userA.username,
-      teamA: userA.team,
-      ownerB: userB.username,
-      teamB: userB.team
-    };
-
-    const fixtureId = 'fixture-' + Date.now();
+// Edit fixture date
+window.editFixture = async (fixtureId) => {
+  const newDate = prompt('Enter new date and time (YYYY-MM-DDTHH:MM):');
+  if (newDate) {
     const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
+    await update(fixtureRef, { date: new Date(newDate).toISOString() });
+    await loadFixtures();
+  }
+};
 
-    set(fixtureRef, fixtureData)
-      .then(() => {
-        alert('Fixture added successfully!');
-        fixtureForm.reset();
-        teamADisplay.textContent = "";
-        teamBDisplay.textContent = "";
-      })
-      .catch((error) => {
-        alert('Error adding fixture: ' + error.message);
-      });
-  });
+// Delete fixture
+window.deleteFixture = async (fixtureId) => {
+  if (confirm('Are you sure you want to delete this fixture?')) {
+    const fixtureRef = ref(db, 'upcomingfixtures/' + fixtureId);
+    await remove(fixtureRef);
+    await loadFixtures();
+  }
+};
 
-  // Load users on page load
-  loadUsers();
+await loadUsers();
+await loadFixtures();
 </script>
 
 </body>
