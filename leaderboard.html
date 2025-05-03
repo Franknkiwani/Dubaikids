@@ -5,91 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaderboard</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Global reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      font-family: Arial, sans-serif;
-      background-color: #1c1c1c;
-      color: white;
+      font-family: 'Arial', sans-serif;
+      background-color: #1e1e1e;
+      color: #f3f3f3;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       text-align: center;
+      overflow: hidden;
+      margin: 0;
     }
 
     .container {
       width: 80%;
-      max-width: 800px;
-      background-color: #2c2c2c;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      max-width: 900px;
+      background-color: #2c2f38;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
     }
 
     h1 {
       color: #ffcc00;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
+      font-size: 2.5em;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     th, td {
-      padding: 12px;
+      padding: 15px;
       text-align: left;
-      border-bottom: 1px solid #444;
+      font-size: 1.1em;
     }
 
     th {
       background-color: #333;
       color: #ffcc00;
+      border-bottom: 3px solid #ffcc00;
     }
 
     td {
       background-color: #444;
+      border-bottom: 1px solid #555;
+    }
+
+    tr:hover td {
+      background-color: #555;
     }
 
     .delete-btn {
       background-color: #e74c3c;
       color: white;
       border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
     .delete-btn:hover {
       background-color: #c0392b;
     }
 
-    /* Modal */
+    /* Confirmation Modal */
     #confirmationModal {
       display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       justify-content: center;
       align-items: center;
-    }
-
-    #confirmationModal .modal-content {
-      background: #333;
+      z-index: 9999;
       padding: 20px;
-      border-radius: 8px;
-      text-align: center;
     }
 
-    #confirmationModal button {
-      margin: 5px;
+    .modal-content {
+      background-color: #333;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .modal-content p {
+      color: #f3f3f3;
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+
+    .modal-content button {
       padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
+      font-size: 1.1em;
+      margin: 10px;
     }
 
     .confirm-btn {
@@ -102,25 +129,36 @@
       color: white;
     }
 
+    /* Button hover effects */
+    .confirm-btn:hover {
+      background-color: #2ecc71;
+    }
+
+    .cancel-btn:hover {
+      background-color: #c0392b;
+    }
+
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1>Leaderboard</h1>
-  <table id="leaderboardTable">
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Name</th>
-        <th>Points</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Data will load here -->
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table id="leaderboardTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Points</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will load here -->
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Confirmation Modal -->
