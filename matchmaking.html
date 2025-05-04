@@ -139,11 +139,19 @@
 
   // Fetch all teams and matches
   function fetchTeams() {
-    const teamsRef = ref(database, 'users/teams');
+    const teamsRef = ref(database, 'users');
     onValue(teamsRef, (snapshot) => {
-      const teams = snapshot.val();
-      if (teams) {
-        updateTeamSelects(teams);
+      const users = snapshot.val();
+      if (users) {
+        const allTeams = new Set();
+        for (const userId in users) {
+          const user = users[userId];
+          const teamName = user.team;
+          if (teamName) {
+            allTeams.add(teamName);
+          }
+        }
+        updateTeamSelects(Array.from(allTeams));
       }
     });
   }
@@ -204,7 +212,7 @@
       teamASelect.innerHTML = '<option value="">Select Team</option>';
       teamBSelect.innerHTML = '<option value="">Select Team</option>';
 
-      for (const teamName in teams) {
+      for (const teamName of teams) {
         if (!usedTeams.has(teamName)) {
           const option = document.createElement('option');
           option.value = teamName;
