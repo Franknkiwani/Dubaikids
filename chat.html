@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CyberChat - Group Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #0a0a0a;
+  color: white;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(45deg, #00c6ff, #0072ff, #00c6ff, #0072ff);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.header .logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Chat Container */
+.chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+}
+
+/* Message bubble */
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.message img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.message-content {
+  background-color: #1a1a1a;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 80%;
+  position: relative;
+}
+
+/* Optional: Little triangle pointer (chat bubble effect) */
+.message-content::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 8px solid #1a1a1a;
+}
+
+.message-content .name {
+  font-weight: bold;
+  color: #00c6ff;
+}
+
+.message-content .text {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.message-content .sticker {
+  font-size: 48px;
+  display: inline-block;
+  padding: 5px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px #00c6ff;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 8px #00c6ff; }
+  to { box-shadow: 0 0 20px #00ffff; }
+}
+
+.message-content .time {
+  font-size: 11px;
+  color: #aaa;
+  text-align: right;
+}
+
+/* Input area (sticky bottom) */
+.input-area {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #111;
+  border-top: 1px solid #333;
+  position: sticky;
+  bottom: 0;
+}
+
+.input-area button, .input-area input {
+  margin: 0 5px;
+}
+
+.input-area .sticker-btn {
+  background: none;
+  border: none;
+  color: #00c6ff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  background-color: #1a1a1a;
+  color: white;
+}
+
+.input-area .send-btn {
+  background-color: #00c6ff;
+  border: none;
+  padding: 10px 15px;
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Sticker Picker */
+.sticker-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  background: #111;
+  padding: 10px;
+  border-radius: 15px;
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  z-index: 99;
+}
+
+.sticker-picker div {
+  font-size: 28px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 0 2px white);
+}
+
+.sticker-picker div:hover {
+  transform: scale(1.2);
+}
+
+/* Premium Popup Styles */
+.premium-popup {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.premium-popup .popup-content {
+  background: #111;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 90%;
+  box-shadow: 0 0 20px #00c6ff;
+}
+
+.premium-popup h2 {
+  color: #00c6ff;
+  margin-bottom: 20px;
+}
+
+.premium-popup ul {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.premium-popup ul li {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.premium-popup .price {
+  font-size: 24px;
+  color: #00ff99;
+  margin-bottom: 20px;
+}
+
+.premium-popup button {
+  margin: 5px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#upgradeBtn {
+  background-color: #00c6ff;
+  color: white;
+}
+
+.close-btn {
+  background-color: #333;
+  color: white;
+}
+
+/* Unlock All Button — Color Changing */
+@keyframes colorShift {
+  0% { background: linear-gradient(45deg, #FFD700, #FFA500); }
+  25% { background: linear-gradient(45deg, #FF8C00, #FF4500); }
+  50% { background: linear-gradient(45deg, #FF69B4, #FF1493); }
+  75% { background: linear-gradient(45deg, #00c6ff, #0072ff); }
+  100% { background: linear-gradient(45deg, #FFD700, #FFA500); }
+}
+
+.unlock-btn {
+  grid-column: span 4;
+  color: #111;
+  padding: 14px;
+  border-radius: 15px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  margin-top: 10px;
+  animation: colorShift 4s linear infinite;
+}
+
+.unlock-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px yellow;
+}
+
+.unlock-btn:active {
+  transform: scale(0.98);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">CyberChat Group</div>
+</div>
+
+<div class="chat-container" id="chatContainer"></div>
+
+<!-- Sticker Picker (all free emojis + unlock button) -->
+<div class="sticker-picker" id="stickerPicker" style="display: none;">
+  <div><span>🚀</span></div>
+  <div><span>👾</span></div>
+  <div><span>💎</span></div>
+  <div><span>🔥</span></div>
+  <div><span>🌈</span></div>
+  <div><span>🤖</span></div>
+  <div><span>🛸</span></div>
+  <div><span>🎮</span></div>
+  <div><span>🦄</span></div>
+  <div><span>👑</span></div>
+  <div><span>💰</span></div>
+  <div><span>🛰️</span></div>
+  <div><span>✨</span></div>
+  <div><span>🎉</span></div>
+   <div><span>💀</span></div>
+   <div><span>🥶</span></div>
+  <div><span>😘</span></div>
+  <div><span>😭</span></div>
+  <div><span>😂</span></div>
+   <div><span>🤑</span></div>
+  <!-- Unlock all button -->
+  <div class="unlock-btn" id="unlockAllBtn">PRO</div>
+</div>
+
+<!-- Premium Popup -->
+<div class="premium-popup" id="premiumPopup" style="display: none;">
+  <div class="popup-content">
+    <h2>Unlock Premium</h2>
+    <ul>
+      <li>✨ Unlock all special stickers</li>
+      <li>⭐ Name highlight in chat</li>
+      <li>🛡️ Admin powers (delete messages)</li>
+      <li>🚫 Ban & block other users</li>
+      <li>🎨 More profile customizations</li>
+    </ul>
+    <div class="price">$0.99 / month</div>
+    <button id="upgradeBtn">Upgrade Now</button>
+    <button id="closePopupBtn" class="close-btn">Cancel</button>
+  </div>
+</div>
+
+<div class="input-area">
+  <button class="sticker-btn" id="stickerBtn">😊</button>
+  <input type="text" id="messageInput" placeholder="Type a message">
+  <button class="send-btn" id="sendBtn">Send</button>
+</div>
+
+<div class="premium-popup" id="premiumPopup" style="display: none;">
+  <div class="popup-content">
+    <h2>Unlock Premium</h2>
+    <ul>
+      <li>✨ Unlock all special stickers</li>
+      <li>⭐ Name highlight in chat</li>
+      <li>🛡️ Admin powers (delete messages)</li>
+      <li>🚫 Ban & block other users</li>
+      <li>🎨 More profile customizations</li>
+    </ul>
+    <div class="price">$0.99 / month</div>
+    <button id="upgradeBtn">Upgrade Now</button>
+    <button id="closePopupBtn" class="close-btn">Cancel</button>
+  </div>
+</div>
+<script type="module">
+// Firebase SDKs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const messagesRef = ref(db, 'messages');
+
+const user = {
+  name: 'You',
+  profilePic: `https://api.dicebear.com/7.x/identicon/svg?seed=${Math.random()}`
+};
+
+const chatContainer = document.getElementById('chatContainer');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const stickerBtn = document.getElementById('stickerBtn');
+const stickerPicker = document.getElementById('stickerPicker');
+const premiumPopup = document.getElementById('premiumPopup');
+const closePopupBtn = document.getElementById('closePopupBtn');
+
+let isPremiumUser = false;  // Change to true if upgraded
+
+function getCurrentTime() {
+  const now = new Date();
+  const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  const date = now.toLocaleDateString();
+  return `${date} ${time}`;
+}
+
+function addMessageToUI(name, profilePic, text, time, isSticker = false) {
+  const messageEl = document.createElement('div');
+  messageEl.classList.add('message');
+
+  let content = isSticker
+    ? `<div class="sticker">${text}</div>`
+    : `<div class="text">${text}</div>`;
+
+  messageEl.innerHTML = `
+    <img src="${profilePic}" alt="${name}">
+    <div class="message-content">
+      <div class="name">${name}</div>
+      ${content}
+     <div class="time">${time}</div>
+    </div>
+  `;
+  chatContainer.appendChild(messageEl);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+sendBtn.addEventListener('click', () => {
+  const messageText = messageInput.value.trim();
+  if (messageText) {
+    const time = getCurrentTime();
+    const newMessage = {
+      name: user.name,
+      profilePic: user.profilePic,
+      text: messageText,
+      time: time
+    };
+
+    push(messagesRef, newMessage);  // Push message to Firebase Realtime Database
+    messageInput.value = '';  // Clear input after sending
+  }
+});
+
+// Listen for new messages and update UI
+onChildAdded(messagesRef, (data) => {
+  const message = data.val();
+  addMessageToUI(message.name, message.profilePic, message.text, message.time, message.isSticker);
+});
+
+stickerBtn.addEventListener('click', () => {
+  stickerPicker.style.display = stickerPicker.style.display === 'none' ? 'grid' : 'none';
+});
+
+document.querySelectorAll('.sticker-picker div').forEach((sticker) => {
+  sticker.addEventListener('click', (e) => {
+    const stickerText = e.target.innerText;
+    const time = getCurrentTime();
+    const newMessage = {
+      name: user.name,
+      profilePic: user.profilePic,
+      text: stickerText,
+      time: time,
+      isSticker: true
+    };
+
+    push(messagesRef, newMessage);  // Push sticker to Firebase Realtime Database
+    stickerPicker.style.display = 'none';  // Hide sticker picker
+  });
+});
+
+// Premium Upgrade Section
+document.getElementById('upgradeBtn').addEventListener('click', () => {
+  isPremiumUser = true;  // Mark user as premium
+  premiumPopup.style.display = 'none';  // Close popup
+  alert('You are now a premium user!');  // Show confirmation
+});
+
+closePopupBtn.addEventListener('click', () => {
+  premiumPopup.style.display = 'none';  // Close popup if canceled
+});
+// Unlock All Stickers button opens the premium popup
+const unlockAllBtn = document.getElementById('unlockAllBtn');
+if (unlockAllBtn) {
+  unlockAllBtn.addEventListener('click', () => {
+    premiumPopup.style.display = 'flex';  // Show premium popup
+  });
+}
+</script>
+</body>
+</html>
