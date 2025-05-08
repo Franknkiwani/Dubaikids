@@ -2,16 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Unique Key Generator</title>
+  <title>Key Generator & Tracker</title>
   <script type="module">
-    // Import the functions you need from the Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
     import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
       authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -23,112 +20,116 @@
       measurementId: "G-LLT6F9WRKH"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const auth = getAuth();
     const db = getDatabase();
 
-    // Anonymous sign-in
-    signInAnonymously(auth)
-      .then(() => {
-        console.log('Anonymous User Signed In');
-        checkUserKey();
-      })
-      .catch((error) => {
-        console.error('Error signing in anonymously: ', error);
-      });
-
-    // Check if user has a unique key
-    function checkUserKey() {
-      const userId = auth.currentUser.uid;
-      const userRef = ref(db, 'users/' + userId);
-
-      get(userRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          console.log('User already has a unique key: ', snapshot.val().key);
-          document.getElementById('status').innerHTML = 'Your unique key: ' + snapshot.val().key;
-          getClickCount(snapshot.val().key); // Get the click count for the existing key
-        } else {
-          console.log('No unique key found for this user, generating one...');
-          generateUniqueKey(userId);
-        }
-      }).catch((error) => {
-        console.error('Error checking user key: ', error);
-      });
+    // Helper functions
+    function extractURLParts() {
+      const path = window.location.pathname.split('/').filter(Boolean);
+      if (path.length === 2 && path[0].startsWith('KEY-')) {
+        return { key: path[0], userId: path[1] };
+      }
+      return null;
     }
 
-    // Generate unique key for the user
-    function generateUniqueKey(userId) {
-      const newKey = 'KEY-' + Math.random().toString(36).substr(2, 9); // Generates a random key
-
-      const newKeyRef = ref(db, 'keys/' + newKey);
-      set(newKeyRef, {
-        createdBy: userId,
-        clicks: 0
-      });
-
-      const userRef = ref(db, 'users/' + userId);
-      set(userRef, {
-        key: newKey
-      });
-
-      console.log('Unique key generated: ' + newKey);
-      document.getElementById('status').innerHTML = 'Your unique key: ' + newKey;
-      document.getElementById('share-link').href = `https://sawutser.top/${newKey}/${userId}`; // URL for sharing
+    function displayLink(key, userId) {
+      const link = `https://sawutser.top/${key}/${userId}`;
+      document.getElementById('share-link').href = link;
+      document.getElementById('share-link').innerText = link;
     }
 
-    // Get the number of clicks for the generated key
-    function getClickCount(key) {
-      const keyRef = ref(db, 'keys/' + key);
-      get(keyRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const clickCount = snapshot.val().clicks;
-          document.getElementById('click-count').innerHTML = `This link has been visited ${clickCount} times.`;
-        } else {
-          console.log('No data available for this key.');
-        }
-      }).catch((error) => {
-        console.error('Error fetching click count: ', error);
-      });
+    function updateClickCountUI(count) {
+      document.getElementById('click-count').innerText = `This link has been visited ${count} times.`;
     }
 
-    // Increment clicks when the link is visited
-    window.onload = function() {
-      const path = window.location.pathname.split('/');
-      const key = path[1]; // Key part from URL
-      const userId = path[2]; // User ID part from URL
-
-      if (key && key.startsWith('KEY-')) {
-        const keyRef = ref(db, 'keys/' + key);
-        get(keyRef).then((snapshot) => {
+    function trackClickIfSharedLink() {
+      const parts = extractURLParts();
+      if (parts) {
+        const keyRef = ref(db, 'keys/' + parts.key);
+        get(keyRef).then(snapshot => {
           if (snapshot.exists()) {
-            const clickCount = snapshot.val().clicks + 1;
-            update(keyRef, {
-              clicks: clickCount
+            const data = snapshot.val();
+            const newCount = (data.clicks || 0) + 1;
+            update(keyRef, { clicks: newCount }).then(() => {
+              updateClickCountUI(newCount);
             });
-            console.log('Click counted for ' + key + '. Total clicks: ', clickCount);
+          } else {
+            document.getElementById('click-count').innerText = 'Invalid key.';
           }
-        }).catch((error) => {
-          console.error('Error counting click: ', error);
         });
       }
-    };
-  </script>
-</head>
-<body>
-  <h1>Firebase Unique Key Generator</h1>
-  <p id="status">Please wait...</p>
-  <button id="generateKeyButton" onclick="generateUniqueKey(auth.currentUser.uid)">Generate Unique Key</button>
-  <p>Share your unique link:</p>
-  <a id="share-link" href="#" target="_blank">Share Link</a>
-  <p id="click-count">Click count will appear here.</p>
+    }
 
-  <script>
-    // You can also add a button to share the link directly or show the URL.
-    document.getElementById('generateKeyButton').addEventListener('click', () => {
-      checkUserKey();
+    function getClickCount(key) {
+      const keyRef = ref(db, 'keys/' + key);
+      get(keyRef).then(snapshot => {
+        if (snapshot.exists()) {
+          const clickCount = snapshot.val().clicks || 0;
+          updateClickCountUI(clickCount);
+        }
+      });
+    }
+
+    // MAIN FLOW
+    signInAnonymously(auth).then(() => {
+      const userId = auth.currentUser.uid;
+      const parts = extractURLParts();
+
+      if (parts) {
+        // Visitor of shared link → only track click
+        document.getElementById('generator-section').style.display = 'none';
+        trackClickIfSharedLink();
+      } else {
+        // User on app → key generation
+        const userRef = ref(db, 'users/' + userId);
+        get(userRef).then(snapshot => {
+          if (snapshot.exists()) {
+            const key = snapshot.val().key;
+            document.getElementById('status').innerText = 'Your unique key: ' + key;
+            displayLink(key, userId);
+            getClickCount(key);
+          }
+        });
+
+        document.getElementById('generateKeyButton').addEventListener('click', () => {
+          get(userRef).then(snapshot => {
+            if (snapshot.exists()) {
+              const key = snapshot.val().key;
+              alert('You already have a key: ' + key);
+              document.getElementById('status').innerText = 'Your unique key: ' + key;
+              displayLink(key, userId);
+              getClickCount(key);
+            } else {
+              const newKey = 'KEY-' + Math.random().toString(36).substr(2, 9);
+              const keyRef = ref(db, 'keys/' + newKey);
+              set(keyRef, { createdBy: userId, clicks: 0 }).then(() => {
+                set(userRef, { key: newKey }).then(() => {
+                  document.getElementById('status').innerText = 'Your unique key: ' + newKey;
+                  displayLink(newKey, userId);
+                  updateClickCountUI(0);
+                });
+              });
+            }
+          });
+        });
+      }
     });
   </script>
+</head>
+
+<body>
+  <h1>Key Generator & Tracker</h1>
+
+  <div id="generator-section">
+    <p id="status">Click below to generate your unique key.</p>
+    <button id="generateKeyButton">Generate Unique Key</button>
+    <p>Share this link:</p>
+    <a id="share-link" href="#" target="_blank">Link will appear here</a>
+  </div>
+
+  <p id="click-count">Click count will appear here.</p>
+
 </body>
 </html>
