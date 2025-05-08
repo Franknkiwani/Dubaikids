@@ -1,287 +1,110 @@
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Referral Program</title>
+  <title>Referral Dashboard</title>
   <style>
-    /* Global Styles */
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f9;
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
-
-    .container {
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 600px;
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       text-align: center;
-    }
-
-    h1 {
-      color: #333;
-    }
-
-    label {
-      font-weight: bold;
-      color: #555;
-    }
-
-    input[type="email"], input[type="password"], input[type="submit"], button {
       width: 100%;
+      max-width: 400px;
+    }
+    .ref-link {
+      background: #e9ecef;
       padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-
-    input[type="submit"], button {
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
-    }
-
-    input[type="submit"]:hover, button:hover {
-      background-color: #0056b3;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .referral-section {
-      margin-top: 20px;
-    }
-
-    .referral-link {
-      color: #007BFF;
-      font-weight: bold;
+      border-radius: 8px;
       word-wrap: break-word;
-      display: inline-block;
       margin-bottom: 10px;
     }
-
-    .clicks {
-      font-size: 24px;
-      font-weight: bold;
-      color: green;
-      margin-top: 20px;
-    }
-
-    .login-section {
-      margin-bottom: 20px;
-    }
-
-    .alert {
-      padding: 10px;
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background: #007bff;
+      border: none;
+      color: white;
       border-radius: 5px;
+      cursor: pointer;
+    }
+    .visits {
       margin-top: 20px;
+      font-size: 24px;
+      color: green;
+      font-weight: bold;
     }
   </style>
-  <script type="module">
-    // Import necessary Firebase SDKs
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getDatabase, ref, set, increment, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-      authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-      databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-      projectId: "itzhoyoo-f9f7e",
-      storageBucket: "itzhoyoo-f9f7e.firebasestorage.app",
-      messagingSenderId: "1094792075584",
-      appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-      measurementId: "G-LLT6F9WRKH"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth();
-
-    // Generate a referral link
-    function generateReferralLink(userId) {
-      return `https://yourwebsite.com/signup?ref=${userId}`;
-    }
-
-    // Save user data to Firebase database
-    function saveUserData(userId, referralLink) {
-      const userRef = ref(db, 'users/' + userId);
-      set(userRef, {
-        referralLink: referralLink,
-        referrals: 0,  // Initialize with 0 referrals
-        clicks: 0     // Initialize clicks count
-      });
-    }
-
-    // Update click count for the referral link
-    function updateClickCount(referralCode) {
-      const userRef = ref(db, 'users/' + referralCode + '/clicks');
-      get(userRef).then(snapshot => {
-        let currentClicks = snapshot.val() || 0;
-        set(userRef, currentClicks + 1);
-      });
-    }
-
-    // Sign up user
-    async function signUpUser(email, password, referralCode = null) {
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        const referralLink = generateReferralLink(user.uid);
-
-        // Save user data
-        saveUserData(user.uid, referralLink);
-
-        // If a referral code was used, increment the referrer's referral count
-        if (referralCode) {
-          const referrerRef = ref(db, 'users/' + referralCode + '/referrals');
-          set(referrerRef, increment(1));
-        }
-
-        console.log('User signed up successfully. Referral link:', referralLink);
-        alert('Signup successful. Your referral link: ' + referralLink);
-      } catch (error) {
-        console.error("Error signing up:", error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-    // Login user
-    async function loginUser(email, password) {
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        console.log('User logged in');
-      } catch (error) {
-        console.error('Login error:', error);
-        alert('Login failed: ' + error.message);
-      }
-    }
-
-    // Handle user authentication state
-    onAuthStateChanged(auth, (user) => {
-      const loginForm = document.getElementById('login-form');
-      const referralSection = document.getElementById('referral-section');
-      const logoutButton = document.getElementById('logout-btn');
-      if (user) {
-        loginForm.classList.add('hidden');
-        referralSection.classList.remove('hidden');
-        logoutButton.classList.remove('hidden');
-
-        // Display the referral link and visits on dashboard
-        document.getElementById('referral-link').textContent = `https://yourwebsite.com/signup?ref=${user.uid}`;
-        get(ref(db, 'users/' + user.uid + '/clicks')).then(snapshot => {
-          const clicks = snapshot.val() || 0;
-          document.getElementById('clicks-count').textContent = clicks;
-        });
-      } else {
-        loginForm.classList.remove('hidden');
-        referralSection.classList.add('hidden');
-        logoutButton.classList.add('hidden');
-      }
-    });
-
-    // Event listener for signup form
-    document.getElementById('signup-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const referralCode = new URLSearchParams(window.location.search).get('ref');
-      signUpUser(email, password, referralCode);
-    });
-
-    // Event listener for login form
-    document.getElementById('login-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      loginUser(email, password);
-    });
-
-    // Handle logout
-    document.getElementById('logout-btn').addEventListener('click', function () {
-      signOut(auth).then(() => {
-        console.log('User logged out');
-      });
-    });
-
-    // Handle copy referral link button
-    document.getElementById('copy-btn').addEventListener('click', function () {
-      const referralLink = document.getElementById('referral-link').textContent;
-      navigator.clipboard.writeText(referralLink).then(() => {
-        alert('Referral link copied to clipboard!');
-      });
-    });
-
-    // Track clicks when the referral link is accessed
-    const referralCode = new URLSearchParams(window.location.search).get('ref');
-    if (referralCode) {
-      updateClickCount(referralCode);
-    }
-  </script>
 </head>
 <body>
-  <div class="container">
-    <!-- Login Form -->
-    <div id="login-form">
-      <h1>Login</h1>
-      <form>
-        <div class="login-section">
-          <label for="login-email">Email:</label><br>
-          <input type="email" id="login-email" required><br><br>
+<div class="card">
+  <h2>Welcome to Your Dashboard</h2>
+  <p>Your Referral Link:</p>
+  <div class="ref-link" id="referralLink">Generating...</div>
+  <button onclick="copyLink()">Copy Link</button>
+  <div class="visits">Visits: <span id="visitCount">0</span></div>
+</div>
 
-          <label for="login-password">Password:</label><br>
-          <input type="password" id="login-password" required><br><br>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
-          <input type="submit" value="Login">
-        </div>
-      </form>
-    </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
 
-    <!-- Referral Program -->
-    <div id="referral-section" class="hidden">
-      <h1>Referral Program</h1>
-      <div>
-        <p>Share your referral link and earn rewards!</p>
-        <p>Your referral link: <span id="referral-link" class="referral-link"></span></p>
-        <button id="copy-btn">Copy Referral Link</button>
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-        <div class="clicks">
-          <p>Number of Visits: <span id="clicks-count">0</span></p>
-        </div>
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const uid = user.uid;
+      const referralLink = `${window.location.origin}/track.html?ref=${uid}`;
+      document.getElementById('referralLink').textContent = referralLink;
 
-        <button id="logout-btn" class="hidden">Logout</button>
-      </div>
-    </div>
+      const userRef = ref(db, 'users/' + uid);
+      get(userRef).then(snapshot => {
+        if (!snapshot.exists()) {
+          // First time user, create their record
+          set(userRef, {
+            clicks: 0
+          });
+        } else {
+          // Show current click count
+          const data = snapshot.val();
+          document.getElementById('visitCount').textContent = data.clicks || 0;
+        }
+      });
+    } else {
+      signInWithPopup(auth, provider);
+    }
+  });
 
-    <!-- Signup Form -->
-    <div id="signup-form" class="hidden">
-      <h1>Sign Up</h1>
-      <form>
-        <label for="email">Email:</label><br>
-        <input type="email" id="email" required><br><br>
-
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" required><br><br>
-
-        <input type="submit" value="Sign Up">
-      </form>
-    </div>
-  </div>
+  function copyLink() {
+    const link = document.getElementById('referralLink').textContent;
+    navigator.clipboard.writeText(link);
+    alert('Referral link copied!');
+  }
+</script>
 </body>
 </html>
