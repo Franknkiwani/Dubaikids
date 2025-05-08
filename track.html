@@ -1,0 +1,67 @@
+<!-- track.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tracking Referral...</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      text-align: center;
+    }
+    .card {
+      padding: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>Redirecting you...</h2>
+  <p>Please wait a moment</p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const referralCode = urlParams.get('ref');
+
+  if (referralCode) {
+    const userRef = ref(db, 'users/' + referralCode + '/clicks');
+
+    get(userRef).then(snapshot => {
+      let currentClicks = snapshot.val() || 0;
+      set(userRef, currentClicks + 1).then(() => {
+        // After tracking, redirect to signup.html
+        window.location.href = "signup.html";
+      });
+    });
+  } else {
+    document.querySelector('.card').innerHTML = '<h2>Error</h2><p>Invalid referral link</p>';
+  }
+</script>
+</body>
+</html>
