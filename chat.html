@@ -2,13 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Key Generator & Tracker</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-    import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referral Program</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
 
+    .container {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="email"], input[type="password"], input[type="submit"], button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    input[type="submit"], button {
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+
+    input[type="submit"]:hover, button:hover {
+      background-color: #0056b3;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .referral-section {
+      margin-top: 20px;
+    }
+
+    .referral-link {
+      color: #007BFF;
+      font-weight: bold;
+      word-wrap: break-word;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .clicks {
+      font-size: 24px;
+      font-weight: bold;
+      color: green;
+      margin-top: 20px;
+    }
+
+    .login-section {
+      margin-bottom: 20px;
+    }
+
+    .alert {
+      padding: 10px;
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+  <script type="module">
+    // Import necessary Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getDatabase, ref, set, increment, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
       authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -20,116 +108,180 @@
       measurementId: "G-LLT6F9WRKH"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
     const auth = getAuth();
-    const db = getDatabase();
 
-    // Helper functions
-    function extractURLParts() {
-      const path = window.location.pathname.split('/').filter(Boolean);
-      if (path.length === 2 && path[0].startsWith('KEY-')) {
-        return { key: path[0], userId: path[1] };
-      }
-      return null;
+    // Generate a referral link
+    function generateReferralLink(userId) {
+      return `https://yourwebsite.com/signup?ref=${userId}`;
     }
 
-    function displayLink(key, userId) {
-      const link = `https://sawutser.top/${key}/${userId}`;
-      document.getElementById('share-link').href = link;
-      document.getElementById('share-link').innerText = link;
-    }
-
-    function updateClickCountUI(count) {
-      document.getElementById('click-count').innerText = `This link has been visited ${count} times.`;
-    }
-
-    function trackClickIfSharedLink() {
-      const parts = extractURLParts();
-      if (parts) {
-        const keyRef = ref(db, 'keys/' + parts.key);
-        get(keyRef).then(snapshot => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            const newCount = (data.clicks || 0) + 1;
-            update(keyRef, { clicks: newCount }).then(() => {
-              updateClickCountUI(newCount);
-            });
-          } else {
-            document.getElementById('click-count').innerText = 'Invalid key.';
-          }
-        });
-      }
-    }
-
-    function getClickCount(key) {
-      const keyRef = ref(db, 'keys/' + key);
-      get(keyRef).then(snapshot => {
-        if (snapshot.exists()) {
-          const clickCount = snapshot.val().clicks || 0;
-          updateClickCountUI(clickCount);
-        }
+    // Save user data to Firebase database
+    function saveUserData(userId, referralLink) {
+      const userRef = ref(db, 'users/' + userId);
+      set(userRef, {
+        referralLink: referralLink,
+        referrals: 0,  // Initialize with 0 referrals
+        clicks: 0     // Initialize clicks count
       });
     }
 
-    // MAIN FLOW
-    signInAnonymously(auth).then(() => {
-      const userId = auth.currentUser.uid;
-      const parts = extractURLParts();
+    // Update click count for the referral link
+    function updateClickCount(referralCode) {
+      const userRef = ref(db, 'users/' + referralCode + '/clicks');
+      get(userRef).then(snapshot => {
+        let currentClicks = snapshot.val() || 0;
+        set(userRef, currentClicks + 1);
+      });
+    }
 
-      if (parts) {
-        // Visitor of shared link → only track click
-        document.getElementById('generator-section').style.display = 'none';
-        trackClickIfSharedLink();
+    // Sign up user
+    async function signUpUser(email, password, referralCode = null) {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const referralLink = generateReferralLink(user.uid);
+
+        // Save user data
+        saveUserData(user.uid, referralLink);
+
+        // If a referral code was used, increment the referrer's referral count
+        if (referralCode) {
+          const referrerRef = ref(db, 'users/' + referralCode + '/referrals');
+          set(referrerRef, increment(1));
+        }
+
+        console.log('User signed up successfully. Referral link:', referralLink);
+        alert('Signup successful. Your referral link: ' + referralLink);
+      } catch (error) {
+        console.error("Error signing up:", error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Login user
+    async function loginUser(email, password) {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log('User logged in');
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed: ' + error.message);
+      }
+    }
+
+    // Handle user authentication state
+    onAuthStateChanged(auth, (user) => {
+      const loginForm = document.getElementById('login-form');
+      const referralSection = document.getElementById('referral-section');
+      const logoutButton = document.getElementById('logout-btn');
+      if (user) {
+        loginForm.classList.add('hidden');
+        referralSection.classList.remove('hidden');
+        logoutButton.classList.remove('hidden');
+
+        // Display the referral link and visits on dashboard
+        document.getElementById('referral-link').textContent = `https://yourwebsite.com/signup?ref=${user.uid}`;
+        get(ref(db, 'users/' + user.uid + '/clicks')).then(snapshot => {
+          const clicks = snapshot.val() || 0;
+          document.getElementById('clicks-count').textContent = clicks;
+        });
       } else {
-        // User on app → key generation
-        const userRef = ref(db, 'users/' + userId);
-        get(userRef).then(snapshot => {
-          if (snapshot.exists()) {
-            const key = snapshot.val().key;
-            document.getElementById('status').innerText = 'Your unique key: ' + key;
-            displayLink(key, userId);
-            getClickCount(key);
-          }
-        });
-
-        document.getElementById('generateKeyButton').addEventListener('click', () => {
-          get(userRef).then(snapshot => {
-            if (snapshot.exists()) {
-              const key = snapshot.val().key;
-              alert('You already have a key: ' + key);
-              document.getElementById('status').innerText = 'Your unique key: ' + key;
-              displayLink(key, userId);
-              getClickCount(key);
-            } else {
-              const newKey = 'KEY-' + Math.random().toString(36).substr(2, 9);
-              const keyRef = ref(db, 'keys/' + newKey);
-              set(keyRef, { createdBy: userId, clicks: 0 }).then(() => {
-                set(userRef, { key: newKey }).then(() => {
-                  document.getElementById('status').innerText = 'Your unique key: ' + newKey;
-                  displayLink(newKey, userId);
-                  updateClickCountUI(0);
-                });
-              });
-            }
-          });
-        });
+        loginForm.classList.remove('hidden');
+        referralSection.classList.add('hidden');
+        logoutButton.classList.add('hidden');
       }
     });
+
+    // Event listener for signup form
+    document.getElementById('signup-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const referralCode = new URLSearchParams(window.location.search).get('ref');
+      signUpUser(email, password, referralCode);
+    });
+
+    // Event listener for login form
+    document.getElementById('login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      loginUser(email, password);
+    });
+
+    // Handle logout
+    document.getElementById('logout-btn').addEventListener('click', function () {
+      signOut(auth).then(() => {
+        console.log('User logged out');
+      });
+    });
+
+    // Handle copy referral link button
+    document.getElementById('copy-btn').addEventListener('click', function () {
+      const referralLink = document.getElementById('referral-link').textContent;
+      navigator.clipboard.writeText(referralLink).then(() => {
+        alert('Referral link copied to clipboard!');
+      });
+    });
+
+    // Track clicks when the referral link is accessed
+    const referralCode = new URLSearchParams(window.location.search).get('ref');
+    if (referralCode) {
+      updateClickCount(referralCode);
+    }
   </script>
 </head>
-
 <body>
-  <h1>Key Generator & Tracker</h1>
+  <div class="container">
+    <!-- Login Form -->
+    <div id="login-form">
+      <h1>Login</h1>
+      <form>
+        <div class="login-section">
+          <label for="login-email">Email:</label><br>
+          <input type="email" id="login-email" required><br><br>
 
-  <div id="generator-section">
-    <p id="status">Click below to generate your unique key.</p>
-    <button id="generateKeyButton">Generate Unique Key</button>
-    <p>Share this link:</p>
-    <a id="share-link" href="#" target="_blank">Link will appear here</a>
+          <label for="login-password">Password:</label><br>
+          <input type="password" id="login-password" required><br><br>
+
+          <input type="submit" value="Login">
+        </div>
+      </form>
+    </div>
+
+    <!-- Referral Program -->
+    <div id="referral-section" class="hidden">
+      <h1>Referral Program</h1>
+      <div>
+        <p>Share your referral link and earn rewards!</p>
+        <p>Your referral link: <span id="referral-link" class="referral-link"></span></p>
+        <button id="copy-btn">Copy Referral Link</button>
+
+        <div class="clicks">
+          <p>Number of Visits: <span id="clicks-count">0</span></p>
+        </div>
+
+        <button id="logout-btn" class="hidden">Logout</button>
+      </div>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signup-form" class="hidden">
+      <h1>Sign Up</h1>
+      <form>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" required><br><br>
+
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" required><br><br>
+
+        <input type="submit" value="Sign Up">
+      </form>
+    </div>
   </div>
-
-  <p id="click-count">Click count will appear here.</p>
-
 </body>
 </html>
