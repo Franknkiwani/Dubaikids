@@ -1,31 +1,115 @@
-<!-- track.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Tracking Referral...</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f4f4f9;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<title>Tracking Referral...</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Styles -->
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #121212;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .card {
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.6);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: popin 0.6s ease;
+  }
+
+  h2 {
+    margin-bottom: 10px;
+    color: #00ff99;
+  }
+
+  p {
+    color: #ccc;
+    font-size: 16px;
+  }
+
+  /* Cute loader */
+  .loader {
+    margin: 20px auto;
+    width: 60px;
+    height: 60px;
+    border: 6px solid #00ff99;
+    border-top: 6px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Loading bar */
+  .progress-bar {
+    position: relative;
+    background: #333;
+    border-radius: 10px;
+    height: 10px;
+    width: 100%;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .progress {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #00ff99, #00ccff);
+    border-radius: 10px;
+    animation: progressAnim 3s forwards;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+
+  @keyframes popin {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes progressAnim {
+    0% { width: 0; }
+    100% { width: 100%; }
+  }
+
+  @media (max-width: 600px) {
     .card {
       padding: 20px;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-  </style>
+
+    h2 {
+      font-size: 22px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+</style>
 </head>
+
 <body>
 <div class="card">
-  <h2>Redirecting you...</h2>
-  <p>Please wait a moment</p>
+  <h2>Loading...</h2>
+  <div class="loader"></div>
+  <p>We are tracking your visit and redirecting you</p>
+  <div class="progress-bar">
+    <div class="progress"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -55,13 +139,19 @@
     get(userRef).then(snapshot => {
       let currentClicks = snapshot.val() || 0;
       set(userRef, currentClicks + 1).then(() => {
-        // After tracking, redirect to signup.html
-        window.location.href = "signup.html";
+        // Redirect after 3 seconds (matches progress bar duration)
+        setTimeout(() => {
+          window.location.href = "signup.html";
+        }, 3000);
       });
     });
   } else {
-    document.querySelector('.card').innerHTML = '<h2>Error</h2><p>Invalid referral link</p>';
+    document.querySelector('.card').innerHTML = `
+      <h2 style="color:red;">Invalid Link</h2>
+      <p>The referral link you used is invalid.</p>
+    `;
   }
 </script>
+
 </body>
 </html>
