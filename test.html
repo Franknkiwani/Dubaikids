@@ -7,7 +7,6 @@
 <style>
   :root {
     --bg: #121212;
-    --card: #1e1e1e;
     --accent: #4CAF50;
     --accent-dark: #388E3C;
     --text: #e0e0e0;
@@ -21,26 +20,17 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
     user-select: none;
     -webkit-user-select: none;
-  }
-
-  .container {
-    background: var(--card);
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    width: 90%;
-    max-width: 400px;
     text-align: center;
   }
 
   h2 {
-    margin-bottom: 20px;
-    color: var(--text);
+    margin-bottom: 15px;
   }
 
   .avatar-selector {
@@ -49,6 +39,7 @@
     align-items: center;
     overflow-x: auto;
     margin: 20px 0;
+    padding-bottom: 10px;
   }
 
   .avatar {
@@ -71,7 +62,7 @@
     border: 2px solid var(--accent);
   }
 
-  .profile-pic {
+  #profilePic {
     width: 90px;
     height: 90px;
     border-radius: 50%;
@@ -81,7 +72,8 @@
   }
 
   input {
-    width: 100%;
+    width: 80%;
+    max-width: 300px;
     padding: 12px;
     margin: 10px 0;
     border-radius: 12px;
@@ -92,7 +84,8 @@
   }
 
   button {
-    width: 100%;
+    width: 80%;
+    max-width: 300px;
     padding: 12px;
     margin-top: 12px;
     border: none;
@@ -119,7 +112,6 @@
   #logout {
     background: #e53935;
     color: white;
-    margin-top: 15px;
   }
 
   #logout:hover {
@@ -137,7 +129,7 @@
   }
 
   #popupBox {
-    background: var(--card);
+    background: #1e1e1e;
     padding: 30px;
     border-radius: 20px;
     box-shadow: var(--shadow);
@@ -148,7 +140,6 @@
 
   #popupBox h3 {
     margin-bottom: 20px;
-    color: var(--text);
   }
 
   #loginNow {
@@ -171,18 +162,16 @@
 </head>
 <body>
 
-<div class="container">
-  <h2>My Profile</h2>
-  <img id="profilePic" class="profile-pic" src="" alt="Profile Picture">
+<h2>My Profile</h2>
+<img id="profilePic" src="" alt="Profile Picture">
 
-  <div class="avatar-selector" id="avatarSelector"></div>
+<div class="avatar-selector" id="avatarSelector"></div>
 
-  <input type="text" id="username" placeholder="Username">
-  <input type="email" id="email" placeholder="Email">
+<input type="text" id="username" placeholder="Username">
+<input type="email" id="email" placeholder="Email">
 
-  <button id="updateProfile">Update Profile</button>
-  <button id="logout">Logout</button>
-</div>
+<button id="updateProfile">Update Profile</button>
+<button id="logout">Logout</button>
 
 <!-- Popup -->
 <div id="popupOverlay">
