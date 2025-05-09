@@ -72,14 +72,34 @@
     color: white;
     margin-top: 15px;
   }
-  .eye {
-    position: relative;
+
+  /* Popup styles */
+  #popupOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
   }
-  .eye-icon {
-    position: absolute;
-    right: 12px;
-    top: 14px;
+  #popupBox {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  #popupBox h3 {
+    margin-bottom: 20px;
+  }
+  #loginNow {
+    padding: 10px 20px;
+    background: #4CAF50;
+    border: none;
+    color: white;
+    border-radius: 8px;
     cursor: pointer;
+    font-weight: bold;
   }
 </style>
 </head>
@@ -93,19 +113,23 @@
 
   <input type="text" id="username" placeholder="Username">
   <input type="email" id="email" placeholder="Email">
-  <div class="eye">
-    <input type="password" id="password" placeholder="New Password">
-    <span class="eye-icon" id="togglePassword">👁️</span>
-  </div>
 
   <button id="updateProfile">Update Profile</button>
   <button id="logout">Logout</button>
 </div>
 
+<!-- Popup -->
+<div id="popupOverlay">
+  <div id="popupBox">
+    <h3>You are not logged in</h3>
+    <button id="loginNow">Login Now</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-import { getAuth, onAuthStateChanged, updateEmail, updatePassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, updateEmail, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -123,7 +147,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-// Dummy avatar URLs (replace with your own if you want)
+// Dummy avatar URLs
 const avatars = [
   'https://i.pravatar.cc/150?img=3',
   'https://i.pravatar.cc/150?img=4',
@@ -176,7 +200,6 @@ onAuthStateChanged(auth, (user) => {
 
       document.getElementById('username').value = username;
       document.getElementById('email').value = email;
-      document.getElementById('password').value = '';
       setSelectedAvatar(profilepic);
 
       // Save localStorage
@@ -189,7 +212,6 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('updateProfile').onclick = () => {
       const newUsername = document.getElementById('username').value.trim();
       const newEmail = document.getElementById('email').value.trim();
-      const newPassword = document.getElementById('password').value.trim();
 
       updateProfile(user, {
         displayName: newUsername,
@@ -200,17 +222,12 @@ onAuthStateChanged(auth, (user) => {
         updateEmail(user, newEmail).catch(e => console.error(e));
       }
 
-      if (newPassword.length > 0) {
-        updatePassword(user, newPassword).catch(e => console.error(e));
-      }
-
       update(userRef, {
         username: newUsername,
         email: newEmail,
         profilepic: selectedAvatar
       });
 
-      // localStorage update
       localStorage.setItem('profilepic', selectedAvatar);
       localStorage.setItem('username', newUsername);
       localStorage.setItem('email', newEmail);
@@ -219,15 +236,16 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('logout').onclick = () => {
       signOut(auth).then(() => location.reload());
     };
+
   } else {
-    alert('No user is logged in.');
+    // Show popup
+    document.getElementById('popupOverlay').style.display = 'flex';
   }
 });
 
-// Toggle password visibility
-document.getElementById('togglePassword').onclick = () => {
-  const pwd = document.getElementById('password');
-  pwd.type = pwd.type === 'password' ? 'text' : 'password';
+// Login Now button
+document.getElementById('loginNow').onclick = () => {
+  window.location.href = 'login.html';
 };
 </script>
 
