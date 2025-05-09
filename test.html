@@ -190,6 +190,8 @@ label {
   ];
 
   let currentIndex = 2;
+  let currentUser = null;
+
   const avatarSelector = document.getElementById('avatarSelector');
   const currentProfilePic = document.getElementById('currentProfilePic');
 
@@ -237,38 +239,35 @@ label {
   });
 
   document.getElementById('updateProfileButton').addEventListener('click', () => {
+    if (!currentUser) return;
+
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const selectedAvatar = avatars[currentIndex];
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const updates = { profilepic: selectedAvatar };
-        if (username) updates.username = username;
-        if (email) updateEmail(user, email).catch(e => console.log(e));
-        if (password) updatePassword(user, password).catch(e => console.log(e));
+    const updates = { profilepic: selectedAvatar, username: username };
 
-        if (username) {
-          updateProfile(user, { displayName: username }).catch(e => console.log(e));
-        }
+    if (email && email !== currentUser.email) {
+      updateEmail(currentUser, email).catch(e => console.log(e));
+    }
 
-        const userRef = ref(database, 'users/' + user.uid);
-        update(userRef, updates);
+    if (password) {
+      updatePassword(currentUser, password).catch(e => console.log(e));
+    }
 
-        localStorage.setItem('profilepic', selectedAvatar);
-        currentProfilePic.src = selectedAvatar;
-      }
-    });
+    updateProfile(currentUser, { displayName: username, photoURL: selectedAvatar }).catch(e => console.log(e));
+
+    const userRef = ref(database, 'users/' + currentUser.uid);
+    update(userRef, updates);
+
+    localStorage.setItem('profilepic', selectedAvatar);
+    currentProfilePic.src = selectedAvatar;
   });
 
   document.getElementById('togglePassword').addEventListener('click', () => {
     const passInput = document.getElementById('password');
-    if (passInput.type === 'password') {
-      passInput.type = 'text';
-    } else {
-      passInput.type = 'password';
-    }
+    passInput.type = passInput.type === 'password' ? 'text' : 'password';
   });
 
   document.getElementById('logoutButton').addEventListener('click', () => {
@@ -286,33 +285,36 @@ label {
     }
   }
 
-  const savedPic = localStorage.getItem('profilepic');
-  if (savedPic && avatars.includes(savedPic)) {
-    setInitialAvatar(savedPic);
-  } else {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const userRef = ref(database);
-        get(child(userRef, `users/${user.uid}`)).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            if (data.profilepic && avatars.includes(data.profilepic)) {
-              localStorage.setItem('profilepic', data.profilepic);
-              setInitialAvatar(data.profilepic);
-            } else {
-              renderAvatars();
-            }
+  function loadUserData(user) {
+    const userRef = ref(database);
+    get(child(userRef, `users/${user.uid}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        if (data.profilepic && avatars.includes(data.profilepic)) {
+          localStorage.setItem('profilepic', data.profilepic);
+          setInitialAvatar(data.profilepic);
+        } else {
+          renderAvatars();
+        }
 
-            document.getElementById('username').value = data.username || '';
-            document.getElementById('email').value = user.email || '';
-          } else {
-            renderAvatars();
-          }
-        });
+        document.getElementById('username').value = data.username || '';
+        document.getElementById('email').value = user.email || '';
       } else {
         renderAvatars();
       }
     });
   }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser = user;
+      const savedPic = localStorage.getItem('profilepic');
+      if (savedPic && avatars.includes(savedPic)) {
+        setInitialAvatar(savedPic);
+      } else {
+        loadUserData(user);
+      }
+    }
+  });
 </script></body>
 </html>
