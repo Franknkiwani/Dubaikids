@@ -1,0 +1,318 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Settings</title>
+  <style>
+    * {
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }body {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  background: #f9f9f9;
+  padding-top: 20px;
+}
+
+h2 {
+  margin: 10px 0;
+  color: #333;
+}
+
+#currentProfilePic {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #007aff;
+  margin-bottom: 15px;
+  object-fit: cover;
+}
+
+.avatar-selector-container, .form-section {
+  margin-bottom: 20px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.avatar-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+}
+
+.center-avatar {
+  width: 100px;
+  height: 100px;
+  border: 3px solid #007aff;
+}
+
+.scroll-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 10px;
+  user-select: none;
+  color: #aaa;
+  transition: color 0.3s;
+}
+
+.scroll-button:hover {
+  color: #333;
+}
+
+button, input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+button {
+  background-color: #007aff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background-color: #005bb5;
+}
+
+label {
+  font-weight: 500;
+  color: #333;
+}
+
+.password-container {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+}
+
+#logoutButton {
+  background-color: #ff3b30;
+  width: 200px;
+  margin: 20px auto 0;
+  display: block;
+}
+
+#logoutButton:hover {
+  background-color: #d12a21;
+}
+
+  </style>
+</head>
+<body>
+  <img id="currentProfilePic" src="https://i.pravatar.cc/100?img=1" alt="Current Profile Picture">
+  <h2>Select Your Profile Picture</h2>  <div class="avatar-selector-container">
+    <button class="scroll-button" id="left">‹</button>
+    <div class="avatar-selector" id="avatarSelector"></div>
+    <button class="scroll-button" id="right">›</button>
+  </div>  <div class="form-section">
+    <label for="username">Username</label>
+    <input type="text" id="username" placeholder="Enter username"><label for="email">Email</label>
+<input type="email" id="email" placeholder="Enter email">
+
+<label for="password">Password</label>
+<div class="password-container">
+  <input type="password" id="password" placeholder="Enter new password">
+  <span class="toggle-password" id="togglePassword">👁️</span>
+</div>
+
+<button id="updateProfileButton">Update Profile</button>
+
+  </div><button id="logoutButton">Logout</button>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, update, get, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
+  import { getAuth, onAuthStateChanged, updateEmail, updatePassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const database = getDatabase(app);
+  const auth = getAuth(app);
+
+  const avatars = [
+    'https://i.pravatar.cc/100?img=1',
+    'https://i.pravatar.cc/100?img=2',
+    'https://i.pravatar.cc/100?img=3',
+    'https://i.pravatar.cc/100?img=4',
+    'https://i.pravatar.cc/100?img=5',
+    'https://i.pravatar.cc/100?img=6'
+  ];
+
+  let currentIndex = 2;
+  const avatarSelector = document.getElementById('avatarSelector');
+  const currentProfilePic = document.getElementById('currentProfilePic');
+
+  function renderAvatars() {
+    avatarSelector.innerHTML = '';
+    const visible = [
+      avatars[currentIndex - 2],
+      avatars[currentIndex - 1],
+      avatars[currentIndex],
+      avatars[currentIndex + 1],
+      avatars[currentIndex + 2]
+    ];
+
+    visible.forEach((src, i) => {
+      if (!src) return;
+      const div = document.createElement('div');
+      div.classList.add('avatar');
+      if (i === 2) div.classList.add('center-avatar');
+
+      const img = document.createElement('img');
+      img.src = src;
+      div.appendChild(img);
+
+      div.addEventListener('click', () => {
+        currentIndex = avatars.indexOf(src);
+        renderAvatars();
+      });
+
+      avatarSelector.appendChild(div);
+    });
+  }
+
+  document.getElementById('left').addEventListener('click', () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      renderAvatars();
+    }
+  });
+
+  document.getElementById('right').addEventListener('click', () => {
+    if (currentIndex < avatars.length - 1) {
+      currentIndex++;
+      renderAvatars();
+    }
+  });
+
+  document.getElementById('updateProfileButton').addEventListener('click', () => {
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const selectedAvatar = avatars[currentIndex];
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const updates = { profilepic: selectedAvatar };
+        if (username) updates.username = username;
+        if (email) updateEmail(user, email).catch(e => console.log(e));
+        if (password) updatePassword(user, password).catch(e => console.log(e));
+
+        if (username) {
+          updateProfile(user, { displayName: username }).catch(e => console.log(e));
+        }
+
+        const userRef = ref(database, 'users/' + user.uid);
+        update(userRef, updates);
+
+        localStorage.setItem('profilepic', selectedAvatar);
+        currentProfilePic.src = selectedAvatar;
+      }
+    });
+  });
+
+  document.getElementById('togglePassword').addEventListener('click', () => {
+    const passInput = document.getElementById('password');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+    } else {
+      passInput.type = 'password';
+    }
+  });
+
+  document.getElementById('logoutButton').addEventListener('click', () => {
+    signOut(auth).then(() => {
+      window.location.reload();
+    });
+  });
+
+  function setInitialAvatar(selectedUrl) {
+    const stored = avatars.indexOf(selectedUrl);
+    if (stored !== -1) {
+      currentIndex = stored;
+      currentProfilePic.src = selectedUrl;
+      renderAvatars();
+    }
+  }
+
+  const savedPic = localStorage.getItem('profilepic');
+  if (savedPic && avatars.includes(savedPic)) {
+    setInitialAvatar(savedPic);
+  } else {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = ref(database);
+        get(child(userRef, `users/${user.uid}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            if (data.profilepic && avatars.includes(data.profilepic)) {
+              localStorage.setItem('profilepic', data.profilepic);
+              setInitialAvatar(data.profilepic);
+            } else {
+              renderAvatars();
+            }
+
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('email').value = user.email || '';
+          } else {
+            renderAvatars();
+          }
+        });
+      } else {
+        renderAvatars();
+      }
+    });
+  }
+</script></body>
+</html>
