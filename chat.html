@@ -1,110 +1,167 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Referral Dashboard</title>
+  <title>CYBERCHAT - Chat</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f9;
+    /* Your CSS for the chat page */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    html, body {
+      height: 100%;
+      background: #111;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+    }
+    header {
+      background: #1a1a1a;
+      padding: 10px 15px;
+      display: flex;
       align-items: center;
-      height: 100vh;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
+    header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+      border: 2px solid #00ffe7;
     }
-    .ref-link {
-      background: #e9ecef;
-      padding: 10px;
-      border-radius: 8px;
+    header .username {
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    .chat-area {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .message {
+      max-width: 75%;
+      padding: 10px 15px;
+      border-radius: 20px;
       word-wrap: break-word;
-      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .sent {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #00ffe7, #007cf0);
+      color: #000;
+    }
+    .received {
+      align-self: flex-start;
+      background: #222;
+      border: 1px solid #00ffe7;
+    }
+    .timestamp {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      margin-top: 4px;
+      text-align: right;
+    }
+    .input-area {
+      display: flex;
+      padding: 10px;
+      background: #111;
+      border-top: 1px solid #222;
+      position: sticky;
+      bottom: 60px;
+      z-index: 100;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+      background: #222;
+      color: white;
+      font-size: 1rem;
     }
     button {
+      margin-left: 10px;
       padding: 10px 20px;
-      margin-top: 10px;
-      background: #007bff;
+      border-radius: 20px;
       border: none;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .visits {
-      margin-top: 20px;
-      font-size: 24px;
-      color: green;
+      background: linear-gradient(135deg, #00ffe7, #007cf0);
+      color: #000;
       font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 8px #00ffe7;
+    }
+    button:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
 <body>
-<div class="card">
-  <h2>Welcome to Your Dashboard</h2>
-  <p>Your Referral Link:</p>
-  <div class="ref-link" id="referralLink">Generating...</div>
-  <button onclick="copyLink()">Copy Link</button>
-  <div class="visits">Visits: <span id="visitCount">0</span></div>
+
+<header>
+  <img id="profilePic" src="" alt="Profile">
+  <div class="username" id="chatUsername">@username</div>
+</header>
+
+<div class="chat-area" id="chatArea"></div>
+
+<div class="input-area">
+  <input type="text" id="messageInput" placeholder="Type a message...">
+  <button id="sendBtn">Send</button>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-  import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+// Firebase imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded, get } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-    projectId: "itzhoyoo-f9f7e",
-    storageBucket: "itzhoyoo-f9f7e.appspot.com",
-    messagingSenderId: "1094792075584",
-    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-    measurementId: "G-LLT6F9WRKH"
-  };
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  const auth = getAuth(app);
-  const provider = new GoogleAuthProvider();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const uid = user.uid;
-      const referralLink = `${window.location.origin}/track.html?ref=${uid}`;
-      document.getElementById('referralLink').textContent = referralLink;
+// Get URL parameter (userid)
+const urlParams = new URLSearchParams(window.location.search);
+const targetUserId = urlParams.get('userid');  // Get the selected user's ID
 
-      const userRef = ref(db, 'users/' + uid);
-      get(userRef).then(snapshot => {
-        if (!snapshot.exists()) {
-          // First time user, create their record
-          set(userRef, {
-            clicks: 0
-          });
-        } else {
-          // Show current click count
-          const data = snapshot.val();
-          document.getElementById('visitCount').textContent = data.clicks || 0;
-        }
-      });
-    } else {
-      signInWithPopup(auth, provider);
+// Fetch the selected user's info
+function fetchUserInfo() {
+  const userRef = ref(db, `users/${targetUserId}`);
+  get(userRef).then(snapshot => {
+    if (snapshot.exists()) {
+      const user = snapshot.val();
+      document.getElementById('chatUsername').innerText = user.username;
+      // Update profile picture if available
+      document.getElementById('profilePic').src = user.profilePic || 'https://ui-avatars.com/api/?name=' + user.username;
     }
   });
+}
 
-  function copyLink() {
-    const link = document.getElementById('referralLink').textContent;
-    navigator.clipboard.writeText(link);
-    alert('Referral link copied!');
-  }
+// Chat functionality (already covered in the previous code)
 </script>
+
 </body>
 </html>
