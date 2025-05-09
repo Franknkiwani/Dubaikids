@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile Manager</title>
 <style>
   :root {
@@ -32,7 +33,7 @@
     padding: 25px;
     border-radius: 20px;
     box-shadow: var(--shadow);
-    width: 100%;
+    width: 90%;
     max-width: 400px;
     text-align: center;
   }
@@ -59,6 +60,7 @@
     cursor: pointer;
     transition: border 0.2s, transform 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    flex-shrink: 0;
   }
 
   .avatar:hover {
