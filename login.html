@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CYBERCHAT - Login</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    input {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin: 10px;
+      background: #222;
+      color: white;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00ffe7, #007cf0);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #007cf0, #00ffe7);
+    }
+  </style>
+</head>
+<body>
+
+<h1>CYBERCHAT - Login</h1>
+<input type="text" id="username" placeholder="Enter your username" required />
+<button id="loginBtn">Login</button>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Handle login
+  const loginBtn = document.getElementById('loginBtn');
+  loginBtn.addEventListener('click', () => {
+    const username = document.getElementById('username').value.trim();
+    if (username !== '') {
+      const userId = username.toLowerCase();  // Use username as the user ID (make it unique)
+      const userRef = ref(db, 'users/' + userId);
+      
+      // Save user info to Firebase
+      set(userRef, {
+        username: username,
+        profilePic: `https://ui-avatars.com/api/?name=${username}&background=00ffe7&color=000`
+      }).then(() => {
+        // After logging in, redirect to the user list page
+        localStorage.setItem('currentUser', username);  // Save the current username to localStorage
+        window.location.href = 'index.html';
+      }).catch((error) => {
+        alert('Error logging in: ' + error.message);
+      });
+    } else {
+      alert('Please enter a valid username.');
+    }
+  });
+</script>
+
+</body>
+</html>
