@@ -2,51 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CYBERCHAT - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CYBERCHAT</title>
   <style>
     body {
       background: #111;
       color: white;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
+      margin: 0;
+    }
+    .login-container {
+      background: #222;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+      width: 300px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
     input {
+      width: 100%;
       padding: 10px;
-      border-radius: 10px;
-      border: none;
-      margin: 10px;
-      background: #222;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background: #333;
       color: white;
       font-size: 1rem;
     }
     button {
-      padding: 10px 20px;
-      border-radius: 10px;
+      width: 100%;
+      padding: 10px;
       background: linear-gradient(135deg, #00ffe7, #007cf0);
-      color: #000;
+      color: black;
       font-weight: bold;
-      cursor: pointer;
       border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
     button:hover {
-      background: linear-gradient(135deg, #007cf0, #00ffe7);
+      opacity: 0.9;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<h1>CYBERCHAT - Login</h1>
-<input type="text" id="username" placeholder="Enter your username" required />
-<button id="loginBtn">Login</button>
+<div class="login-container">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="loginBtn">Login</button>
+  <div class="error" id="error"></div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  
   // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
@@ -58,31 +81,37 @@
     appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
     measurementId: "G-LLT6F9WRKH"
   };
-
+  
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const auth = getAuth(app);
 
-  // Handle login
   const loginBtn = document.getElementById('loginBtn');
-  loginBtn.addEventListener('click', () => {
-    const username = document.getElementById('username').value.trim();
-    if (username !== '') {
-      const userId = username.toLowerCase();  // Use username as the user ID (make it unique)
-      const userRef = ref(db, 'users/' + userId);
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const errorDiv = document.getElementById('error');
+
+  // Login functionality
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value;
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      errorDiv.textContent = 'Please enter both email and password.';
+      return;
+    }
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Store user ID in localStorage
+      localStorage.setItem('currentUser', user.uid);
       
-      // Save user info to Firebase
-      set(userRef, {
-        username: username,
-        profilePic: `https://ui-avatars.com/api/?name=${username}&background=00ffe7&color=000`
-      }).then(() => {
-        // After logging in, redirect to the user list page
-        localStorage.setItem('currentUser', username);  // Save the current username to localStorage
-        window.location.href = 'index.html';
-      }).catch((error) => {
-        alert('Error logging in: ' + error.message);
-      });
-    } else {
-      alert('Please enter a valid username.');
+      // Redirect to the chat page
+      window.location.href = `chat.html?userid=${user.uid}`;
+    } catch (error) {
+      errorDiv.textContent = `Error: ${error.message}`;
     }
   });
 </script>
