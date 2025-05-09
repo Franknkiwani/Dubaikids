@@ -3,92 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CYBERCHAT - Chat</title>
+  <title>Chat - CYBERCHAT</title>
   <style>
     body {
       background: #111;
       color: white;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
       height: 100vh;
+      margin: 0;
     }
-    .chat-area {
+    .chat-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+      height: 100%;
+    }
+    .messages {
       flex: 1;
       padding: 15px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
     }
     .message {
-      max-width: 75%;
       padding: 10px 15px;
-      border-radius: 20px;
+      margin-bottom: 10px;
+      border-radius: 15px;
       word-wrap: break-word;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-      position: relative;
     }
     .sent {
-      align-self: flex-end;
-      background: linear-gradient(135deg, #00ffe7, #007cf0);
+      background: #00ffe7;
       color: black;
+      align-self: flex-end;
     }
     .received {
+      background: #444;
+      color: white;
       align-self: flex-start;
-      background: #222;
-      border: 1px solid #00ffe7;
     }
-    .timestamp {
-      font-size: 0.7rem;
-      opacity: 0.6;
-      margin-top: 4px;
-      text-align: right;
-    }
-    .input-area {
+    input {
+      width: 100%;
       padding: 10px;
-      background: #222;
-      border-top: 1px solid #444;
-      display: flex;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 10px 15px;
-      border-radius: 20px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #444;
       background: #333;
       color: white;
-      font-size: 1rem;
-      border: none;
     }
     button {
-      margin-left: 10px;
-      padding: 10px 20px;
-      border-radius: 20px;
+      padding: 10px;
       background: linear-gradient(135deg, #00ffe7, #007cf0);
       color: black;
       font-weight: bold;
-      cursor: pointer;
       border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Chat</h1>
-</header>
-
-<div class="chat-area" id="chatArea"></div>
-
-<div class="input-area">
+<div class="chat-container">
+  <h2>Chat</h2>
+  <div class="messages" id="messages"></div>
   <input type="text" id="messageInput" placeholder="Type a message..." />
   <button id="sendBtn">Send</button>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-
+  import { getAuth } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  
   const firebaseConfig = {
     apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
     authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -102,54 +96,63 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
-  // Get the current user and the chat partner from the URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentUser = localStorage.getItem('currentUser');
-  const chatUserId = urlParams.get('userid');
-
+  // Get logged-in user from localStorage
+  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
   if (!currentUser) {
-    window.location.href = 'login.html';  // Redirect to login page if not logged in
+    window.location.href = 'login.html';  // Redirect to login if no user is logged in
   }
 
-  // Get references to chat messages
-  const chatRef = ref(db, `chats/${currentUser}/${chatUserId}`);
-  const chatArea = document.getElementById('chatArea');
+  // Get chat partner's userId from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const chatUserId = urlParams.get('userid');
+  if (!chatUserId) {
+    window.location.href = 'login.html';  // If no user ID in URL, redirect to login
+  }
+
+  // Set up messages ref
+  const chatId = [currentUser.uid, chatUserId].sort().join('_');
+  const messagesRef = ref(db, `chats/${chatId}/messages`);
+
+  // Elements
+  const messagesContainer = document.getElementById('messages');
   const messageInput = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
 
-  // Listen for new messages in real-time
-  onChildAdded(chatRef, (data) => {
-    const message = data.val();
+  // Function to display message
+  function displayMessage(msg) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${message.sender === currentUser ? 'sent' : 'received'}`;
-    messageDiv.innerHTML = `
-      <p>${message.text}</p>
-      <span class="timestamp">${new Date(message.timestamp).toLocaleString()}</span>
-    `;
-    chatArea.appendChild(messageDiv);
-    chatArea.scrollTop = chatArea.scrollHeight;  // Scroll to the latest message
+    messageDiv.className = `message ${msg.senderId === currentUser.uid ? 'sent' : 'received'}`;
+    messageDiv.innerHTML = `<p>${msg.text}</p><small>${new Date(msg.timestamp).toLocaleTimeString()}</small>`;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // Listen for new messages
+  onChildAdded(messagesRef, snapshot => {
+    const msg = snapshot.val();
+    displayMessage(msg);
   });
 
-  // Send message when the send button is clicked
+  // Send message
   sendBtn.addEventListener('click', () => {
-    const messageText = messageInput.value.trim();
-    if (messageText !== '') {
-      const newMessageRef = push(chatRef);
-      update(newMessageRef, {
-        sender: currentUser,
-        text: messageText,
-        timestamp: Date.now()
-      }).then(() => {
-        messageInput.value = '';  // Clear the input field after sending
-      }).catch((error) => {
-        console.error('Error sending message: ', error);
-      });
-    }
+    const text = messageInput.value.trim();
+    if (!text) return;
+
+    const newMessage = {
+      senderId: currentUser.uid,
+      text: text,
+      timestamp: Date.now(),
+    };
+
+    push(messagesRef, newMessage).then(() => {
+      messageInput.value = '';  // Clear input after sending
+    });
   });
 
-  // Optional: Allow pressing "Enter" to send the message
-  messageInput.addEventListener('keydown', (e) => {
+  // Optionally, you can also send a message on Enter key press
+  messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       sendBtn.click();
     }
