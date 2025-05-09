@@ -1,320 +1,235 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile Settings</title>
-  <style>
-    * {
-      -webkit-user-select: none;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }body {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  background: #f9f9f9;
-  padding-top: 20px;
-}
-
-h2 {
-  margin: 10px 0;
-  color: #333;
-}
-
-#currentProfilePic {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid #007aff;
-  margin-bottom: 15px;
-  object-fit: cover;
-}
-
-.avatar-selector-container, .form-section {
-  margin-bottom: 20px;
-  width: 90%;
-  max-width: 400px;
-}
-
-.avatar-selector {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  overflow: hidden;
-}
-
-.avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  -webkit-user-drag: none;
-}
-
-.center-avatar {
-  width: 100px;
-  height: 100px;
-  border: 3px solid #007aff;
-}
-
-.scroll-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 10px;
-  user-select: none;
-  color: #aaa;
-  transition: color 0.3s;
-}
-
-.scroll-button:hover {
-  color: #333;
-}
-
-button, input {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-top: 5px;
-  margin-bottom: 10px;
-  width: 100%;
-}
-
-button {
-  background-color: #007aff;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-button:hover {
-  background-color: #005bb5;
-}
-
-label {
-  font-weight: 500;
-  color: #333;
-}
-
-.password-container {
-  position: relative;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #666;
-}
-
-#logoutButton {
-  background-color: #ff3b30;
-  width: 200px;
-  margin: 20px auto 0;
-  display: block;
-}
-
-#logoutButton:hover {
-  background-color: #d12a21;
-}
-
-  </style>
+<meta charset="UTF-8">
+<title>Profile Manager</title>
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .container {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+  }
+  h2 {
+    margin-bottom: 10px;
+  }
+  .avatar-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+  }
+  .avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin: 0 5px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    -webkit-transition: border 0.2s;
+  }
+  .avatar.selected {
+    border: 2px solid #4CAF50;
+  }
+  .profile-pic {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #4CAF50;
+    margin-bottom: 10px;
+  }
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    -webkit-transition: background 0.2s;
+  }
+  #updateProfile {
+    background: #4CAF50;
+    color: white;
+  }
+  #logout {
+    background: #f44336;
+    color: white;
+    margin-top: 15px;
+  }
+  .eye {
+    position: relative;
+  }
+  .eye-icon {
+    position: absolute;
+    right: 12px;
+    top: 14px;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
-  <img id="currentProfilePic" src="https://i.pravatar.cc/100?img=1" alt="Current Profile Picture">
-  <h2>Select Your Profile Picture</h2>  <div class="avatar-selector-container">
-    <button class="scroll-button" id="left">‹</button>
-    <div class="avatar-selector" id="avatarSelector"></div>
-    <button class="scroll-button" id="right">›</button>
-  </div>  <div class="form-section">
-    <label for="username">Username</label>
-    <input type="text" id="username" placeholder="Enter username"><label for="email">Email</label>
-<input type="email" id="email" placeholder="Enter email">
 
-<label for="password">Password</label>
-<div class="password-container">
-  <input type="password" id="password" placeholder="Enter new password">
-  <span class="toggle-password" id="togglePassword">👁️</span>
+<div class="container">
+  <h2>My Profile</h2>
+  <img id="profilePic" class="profile-pic" src="" alt="Profile Picture">
+
+  <div class="avatar-selector" id="avatarSelector"></div>
+
+  <input type="text" id="username" placeholder="Username">
+  <input type="email" id="email" placeholder="Email">
+  <div class="eye">
+    <input type="password" id="password" placeholder="New Password">
+    <span class="eye-icon" id="togglePassword">👁️</span>
+  </div>
+
+  <button id="updateProfile">Update Profile</button>
+  <button id="logout">Logout</button>
 </div>
 
-<button id="updateProfileButton">Update Profile</button>
-
-  </div><button id="logoutButton">Logout</button>
-
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-  import { getDatabase, ref, update, get, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
-  import { getAuth, onAuthStateChanged, updateEmail, updatePassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { getAuth, onAuthStateChanged, updateEmail, updatePassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-    projectId: "itzhoyoo-f9f7e",
-    storageBucket: "itzhoyoo-f9f7e.appspot.com",
-    messagingSenderId: "1094792075584",
-    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-    measurementId: "G-LLT6F9WRKH"
-  };
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+  authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+  databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+  projectId: "itzhoyoo-f9f7e",
+  storageBucket: "itzhoyoo-f9f7e.appspot.com",
+  messagingSenderId: "1094792075584",
+  appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+  measurementId: "G-LLT6F9WRKH"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const database = getDatabase(app);
-  const auth = getAuth(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
 
-  const avatars = [
-    'https://i.pravatar.cc/100?img=1',
-    'https://i.pravatar.cc/100?img=2',
-    'https://i.pravatar.cc/100?img=3',
-    'https://i.pravatar.cc/100?img=4',
-    'https://i.pravatar.cc/100?img=5',
-    'https://i.pravatar.cc/100?img=6'
-  ];
+// Dummy avatar URLs (replace with your own if you want)
+const avatars = [
+  'https://i.pravatar.cc/150?img=3',
+  'https://i.pravatar.cc/150?img=4',
+  'https://i.pravatar.cc/150?img=5',
+  'https://i.pravatar.cc/150?img=6',
+  'https://i.pravatar.cc/150?img=7'
+];
 
-  let currentIndex = 2;
-  let currentUser = null;
+const avatarSelector = document.getElementById('avatarSelector');
+const profilePic = document.getElementById('profilePic');
 
-  const avatarSelector = document.getElementById('avatarSelector');
-  const currentProfilePic = document.getElementById('currentProfilePic');
+let selectedAvatar = avatars[0];
 
-  function renderAvatars() {
-    avatarSelector.innerHTML = '';
-    const visible = [
-      avatars[currentIndex - 2],
-      avatars[currentIndex - 1],
-      avatars[currentIndex],
-      avatars[currentIndex + 1],
-      avatars[currentIndex + 2]
-    ];
+function renderAvatars() {
+  avatarSelector.innerHTML = '';
+  avatars.forEach(url => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.className = 'avatar';
+    if (url === selectedAvatar) img.classList.add('selected');
+    img.onclick = () => {
+      selectedAvatar = url;
+      document.querySelectorAll('.avatar').forEach(a => a.classList.remove('selected'));
+      img.classList.add('selected');
+      profilePic.src = selectedAvatar;
+    };
+    avatarSelector.appendChild(img);
+  });
+}
 
-    visible.forEach((src, i) => {
-      if (!src) return;
-      const div = document.createElement('div');
-      div.classList.add('avatar');
-      if (i === 2) div.classList.add('center-avatar');
+function setSelectedAvatar(url) {
+  selectedAvatar = url || avatars[0];
+  profilePic.src = selectedAvatar;
+  renderAvatars();
+}
 
-      const img = document.createElement('img');
-      img.src = src;
-      div.appendChild(img);
+renderAvatars();
 
-      div.addEventListener('click', () => {
-        currentIndex = avatars.indexOf(src);
-        renderAvatars();
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const userId = user.uid;
+    const userRef = ref(db, 'users/' + userId);
+
+    // Load data
+    onValue(userRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const username = data.username || user.displayName || '';
+      const profilepic = data.profilepic || user.photoURL || avatars[0];
+      const email = data.email || user.email || '';
+
+      document.getElementById('username').value = username;
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = '';
+      setSelectedAvatar(profilepic);
+
+      // Save localStorage
+      localStorage.setItem('profilepic', profilepic);
+      localStorage.setItem('username', username);
+      localStorage.setItem('email', email);
+    });
+
+    // Update profile
+    document.getElementById('updateProfile').onclick = () => {
+      const newUsername = document.getElementById('username').value.trim();
+      const newEmail = document.getElementById('email').value.trim();
+      const newPassword = document.getElementById('password').value.trim();
+
+      updateProfile(user, {
+        displayName: newUsername,
+        photoURL: selectedAvatar
+      }).catch(e => console.error(e));
+
+      if (newEmail !== user.email) {
+        updateEmail(user, newEmail).catch(e => console.error(e));
+      }
+
+      if (newPassword.length > 0) {
+        updatePassword(user, newPassword).catch(e => console.error(e));
+      }
+
+      update(userRef, {
+        username: newUsername,
+        email: newEmail,
+        profilepic: selectedAvatar
       });
 
-      avatarSelector.appendChild(div);
-    });
+      // localStorage update
+      localStorage.setItem('profilepic', selectedAvatar);
+      localStorage.setItem('username', newUsername);
+      localStorage.setItem('email', newEmail);
+    };
+
+    document.getElementById('logout').onclick = () => {
+      signOut(auth).then(() => location.reload());
+    };
+  } else {
+    alert('No user is logged in.');
   }
+});
 
-  document.getElementById('left').addEventListener('click', () => {
-    if (currentIndex > 0) {
-      currentIndex--;
-      renderAvatars();
-    }
-  });
+// Toggle password visibility
+document.getElementById('togglePassword').onclick = () => {
+  const pwd = document.getElementById('password');
+  pwd.type = pwd.type === 'password' ? 'text' : 'password';
+};
+</script>
 
-  document.getElementById('right').addEventListener('click', () => {
-    if (currentIndex < avatars.length - 1) {
-      currentIndex++;
-      renderAvatars();
-    }
-  });
-
-  document.getElementById('updateProfileButton').addEventListener('click', () => {
-    if (!currentUser) return;
-
-    const username = document.getElementById('username').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const selectedAvatar = avatars[currentIndex];
-
-    const updates = { profilepic: selectedAvatar, username: username };
-
-    if (email && email !== currentUser.email) {
-      updateEmail(currentUser, email).catch(e => console.log(e));
-    }
-
-    if (password) {
-      updatePassword(currentUser, password).catch(e => console.log(e));
-    }
-
-    updateProfile(currentUser, { displayName: username, photoURL: selectedAvatar }).catch(e => console.log(e));
-
-    const userRef = ref(database, 'users/' + currentUser.uid);
-    update(userRef, updates);
-
-    localStorage.setItem('profilepic', selectedAvatar);
-    currentProfilePic.src = selectedAvatar;
-  });
-
-  document.getElementById('togglePassword').addEventListener('click', () => {
-    const passInput = document.getElementById('password');
-    passInput.type = passInput.type === 'password' ? 'text' : 'password';
-  });
-
-  document.getElementById('logoutButton').addEventListener('click', () => {
-    signOut(auth).then(() => {
-      window.location.reload();
-    });
-  });
-
-  function setInitialAvatar(selectedUrl) {
-    const stored = avatars.indexOf(selectedUrl);
-    if (stored !== -1) {
-      currentIndex = stored;
-      currentProfilePic.src = selectedUrl;
-      renderAvatars();
-    }
-  }
-
-  function loadUserData(user) {
-    const userRef = ref(database);
-    get(child(userRef, `users/${user.uid}`)).then((snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        if (data.profilepic && avatars.includes(data.profilepic)) {
-          localStorage.setItem('profilepic', data.profilepic);
-          setInitialAvatar(data.profilepic);
-        } else {
-          renderAvatars();
-        }
-
-        document.getElementById('username').value = data.username || '';
-        document.getElementById('email').value = user.email || '';
-      } else {
-        renderAvatars();
-      }
-    });
-  }
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      const savedPic = localStorage.getItem('profilepic');
-      if (savedPic && avatars.includes(savedPic)) {
-        setInitialAvatar(savedPic);
-      } else {
-        loadUserData(user);
-      }
-    }
-  });
-</script></body>
+</body>
 </html>
