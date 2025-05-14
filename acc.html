@@ -13,13 +13,13 @@
         -ms-user-select: none;
       }
 
-      /* Remove mobile blue tap highlight */
+      /* Remove mobile tap highlight */
       a, button {
         -webkit-tap-highlight-color: transparent;
       }
 
       .glass {
-        background-color: rgba(31, 41, 55, 0.7); /* dark semi-transparent */
+        background-color: rgba(31, 41, 55, 0.7);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
       }
@@ -93,11 +93,11 @@
       <p>&copy; 2025 AccVault. All rights reserved.</p>
     </footer>
 
-    <!-- JS for Random Redirect -->
+    <!-- Random Code Redirect Script -->
     <script>
       document.getElementById('browseBtn').addEventListener('click', () => {
-        const code = Math.floor(10000 + Math.random() * 90000); // 5-digit code
-        window.location.href = `https://cyberchat.online/accounts/#${code}`;
+        const code = Math.floor(10000 + Math.random() * 90000); // Random 5-digit code
+        window.location.href = `accounts.html#${code}`;
       });
     </script>
   </body>
