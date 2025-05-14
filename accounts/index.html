@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AccVault – Secure Account Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+      /* Disable text selection */
+      * {
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
+
+      /* Remove mobile blue tap highlight */
+      a, button {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .glass {
+        background-color: rgba(31, 41, 55, 0.7); /* dark semi-transparent */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 flex justify-between items-center px-6 py-4 glass shadow-md">
+      <h1 class="text-2xl font-bold tracking-wide">AccVault</h1>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="text-center px-6 py-24 bg-gradient-to-br from-gray-800 to-black">
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Securely Buy & Sell Game & Social Accounts</h2>
+      <p class="text-gray-400 mb-8 text-lg max-w-2xl mx-auto">
+        AccVault acts as your trusted middleman. No scams. No risk. We hold the payment, transfer the account, and protect both sides.
+      </p>
+      <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
+        <a id="browseBtn" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+          Browse Accounts
+        </a>
+        <a href="#" class="cursor-pointer border border-gray-500 hover:bg-gray-700 px-6 py-3 rounded-xl text-white font-semibold transition">
+          Sell Your Account
+        </a>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="px-6 py-20 bg-gray-900 text-center">
+      <h3 class="text-3xl font-bold mb-12">Why Choose AccVault?</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-gray-300">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-md">
+          <h4 class="text-xl font-semibold mb-2">Manual Escrow System</h4>
+          <p>Every transaction is personally verified. We ensure both parties are satisfied before any money changes hands.</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow-md">
+          <h4 class="text-xl font-semibold mb-2">No Scams Guaranteed</h4>
+          <p>We act as the trusted middleman. Buyers and sellers never interact directly—so scams are impossible.</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow-md">
+          <h4 class="text-xl font-semibold mb-2">Only 20% Fee</h4>
+          <p>Sellers keep 80% of the sale. No hidden fees. Fast payouts once the account is successfully delivered.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="bg-gray-800 px-6 py-20">
+      <h3 class="text-3xl font-bold mb-12 text-center">How It Works</h3>
+      <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-10 text-gray-300 text-center">
+        <div>
+          <div class="text-5xl font-bold mb-2">1</div>
+          <h4 class="text-xl font-semibold mb-2">List Your Account</h4>
+          <p>Submit the account details and wait for buyer interest.</p>
+        </div>
+        <div>
+          <div class="text-5xl font-bold mb-2">2</div>
+          <h4 class="text-xl font-semibold mb-2">We Hold the Payment</h4>
+          <p>The buyer pays us. You send us the account. We verify.</p>
+        </div>
+        <div>
+          <div class="text-5xl font-bold mb-2">3</div>
+          <h4 class="text-xl font-semibold mb-2">You Get Paid</h4>
+          <p>Once the buyer confirms delivery, we send you 80% instantly.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black px-6 py-8 text-gray-500 text-center">
+      <p>&copy; 2025 AccVault. All rights reserved.</p>
+    </footer>
+
+    <!-- JS for Random Redirect -->
+    <script>
+      document.getElementById('browseBtn').addEventListener('click', () => {
+        const code = Math.floor(10000 + Math.random() * 90000); // 5-digit code
+        window.location.href = `https://cyberchat.online/accounts/#${code}`;
+      });
+    </script>
+  </body>
+</html>
