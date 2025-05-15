@@ -18,11 +18,9 @@
   </div>
 
   <script type="module">
-    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
     import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
       authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
@@ -34,21 +32,22 @@
       measurementId: "G-LLT6F9WRKH"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Get Product ID from URL (supports /product.html/abc123)
-    const pathParts = window.location.pathname.split('/');
-    const productId = pathParts[pathParts.length - 1];
-    console.log("Product ID:", productId);
+    // Get productId from URL query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get("productId");
 
-    // Fetch product data from Firebase
+    if (!productId) {
+      document.getElementById("title").innerText = "Product ID not found in URL.";
+      throw new Error("Missing productId in URL");
+    }
+
     const dbRef = ref(db);
     get(child(dbRef, `products/${productId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        console.log("Data found:", data);
         document.getElementById("title").innerText = data.title || "Untitled";
         document.getElementById("description").innerText = data.description || "No description.";
         if (data.image) {
@@ -56,11 +55,10 @@
           document.getElementById("image").style.display = "block";
         }
       } else {
-        console.log("No data found.");
         document.getElementById("title").innerText = "Product not found.";
       }
     }).catch((error) => {
-      console.error("Firebase error:", error);
+      console.error("Error loading product:", error);
       document.getElementById("title").innerText = "Error loading product.";
     });
   </script>
