@@ -35,98 +35,161 @@
       border-radius: 5px;
       cursor: pointer;
       box-shadow: 0 0 5px #0f0 inset;
+      transition: background-color 0.3s ease;
+    }
+    .money-button:hover {
+      background-color: #333;
     }
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding: 1rem;
     }
     .modal {
       background: #222;
-      border-radius: 8px;
-      padding: 2rem;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
       max-width: 400px;
       width: 100%;
-      box-shadow: 0 0 20px lime;
-      transform: scale(0.7);
+      box-shadow: 0 0 25px #0f0;
       opacity: 0;
-      transition: all 0.3s ease;
+      transform: translateY(20px);
+      transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
     }
     .modal.show {
-      transform: scale(1);
       opacity: 1;
+      transform: translateY(0);
     }
-
+    .modal h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      color: lime;
+      text-align: center;
+    }
+    .modal p {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: #ccc;
+      text-align: center;
+    }
     .modal input {
       width: 100%;
-      padding: 0.6rem;
-      margin-bottom: 10px;
+      padding: 0.7rem;
+      margin-bottom: 15px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       font-size: 1rem;
+      background-color: #111;
+      color: #eee;
+      box-shadow: inset 0 0 5px #0f0;
+      outline: none;
     }
     .login-actions {
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
     .login-actions button {
       flex: 1;
-      background: #333;
-      color: #fff;
+      background: #0f0;
+      color: #111;
       border: none;
-      padding: 0.5rem;
-      border-radius: 5px;
+      padding: 0.7rem 0;
+      border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
-      transition: background 0.3s ease;
+      box-shadow: 0 0 10px #0f0;
+      transition: background-color 0.3s ease;
     }
     .login-actions button:hover {
-      background: #444;
+      background: #0c0;
+    }
+    #loginError {
+      color: #f44;
+      text-align: center;
+      min-height: 1.3rem;
+      font-weight: 600;
     }
 
-    #cashoutModal .modal {
-      animation: shake 0.3s ease;
-      background: #111;
-    }
-    @keyframes shake {
-      0% { transform: translateX(-5px); }
-      25% { transform: translateX(5px); }
-      50% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-      100% { transform: translateX(0); }
-    }
-
+    /* Cashout Modal Styles */
     .cashout-options {
       list-style: none;
       padding: 0;
-      margin-top: 1rem;
+      margin: 1rem 0 0 0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 20px #0f0aa0;
     }
     .cashout-options li {
-      margin: 10px 0;
-      padding: 0.5rem;
-      border-radius: 5px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid #0f0a20;
+      transition: background-color 0.25s ease;
     }
-    .paypal { background: #003087; }
-    .payoneer { background: #FF4800; }
-    .bank { background: #006400; }
-    .amazon { background: #FF9900; }
-    .crypto { background: #5a189a; }
+    .cashout-options li:last-child {
+      border-bottom: none;
+    }
+    .cashout-options li:hover {
+      background-color: #0f0a30;
+      color: #0f0;
+    }
+    .paypal {
+      background: #003087;
+      color: white !important;
+    }
+    .payoneer {
+      background: #FF4800;
+      color: white !important;
+    }
+    .bank {
+      background: #006400;
+      color: white !important;
+    }
+    .amazon {
+      background: #FF9900;
+      color: black !important;
+    }
+    .crypto {
+      background: #5a189a;
+      color: white !important;
+    }
+    .cashout-options li::before {
+      content: "•";
+      font-size: 1.4rem;
+      color: inherit;
+      line-height: 0;
+    }
 
     .cancel-button {
-      margin-top: 1rem;
+      margin-top: 1.4rem;
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.7rem;
       border: none;
-      border-radius: 5px;
-      background: gray;
+      border-radius: 8px;
+      background: #555;
       color: white;
-      font-weight: bold;
+      font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 0 10px #555;
+      transition: background-color 0.3s ease;
+    }
+    .cancel-button:hover {
+      background-color: #777;
     }
   </style>
 </head>
@@ -137,39 +200,43 @@
   </header>
 
   <!-- Login/Register Modal -->
-  <div class="modal-backdrop" id="loginModal">
-    <div class="modal">
-      <h2>Login or Register</h2>
-      <input type="email" placeholder="Email" id="loginEmail">
-      <input type="password" placeholder="Password" id="loginPassword">
+  <div class="modal-backdrop" id="loginModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <h2 id="loginTitle">Login or Register</h2>
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email" />
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
       <div class="login-actions">
-        <button id="doLogin">Login</button>
-        <button id="doRegister">Register</button>
+        <button id="doLogin" aria-label="Login">Login</button>
+        <button id="doRegister" aria-label="Register">Register</button>
       </div>
-      <p id="loginError" style="color: red; margin-top: 10px;"></p>
+      <p id="loginError" aria-live="polite" aria-atomic="true"></p>
     </div>
   </div>
 
   <!-- Cashout Modal -->
-  <div class="modal-backdrop" id="cashoutModal">
-    <div class="modal">
-      <h2>Insufficient Balance</h2>
+  <div class="modal-backdrop" id="cashoutModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cashoutTitle">
+      <h2 id="cashoutTitle">Insufficient Balance</h2>
       <p>You need at least $10 to cash out. Choose one:</p>
-      <ul class="cashout-options">
-        <li class="paypal">• PayPal</li>
-        <li class="payoneer">• Payoneer</li>
-        <li class="bank">• Bank Transfer</li>
-        <li class="amazon">• Amazon Gift Card</li>
-        <li class="crypto">• Crypto (e.g., USDT)</li>
+      <ul class="cashout-options" role="list">
+        <li class="paypal" tabindex="0">PayPal</li>
+        <li class="payoneer" tabindex="0">Payoneer</li>
+        <li class="bank" tabindex="0">Bank Transfer</li>
+        <li class="amazon" tabindex="0">Amazon Gift Card</li>
+        <li class="crypto" tabindex="0">Crypto (e.g., USDT)</li>
       </ul>
       <button class="cancel-button" id="cancelCashoutBtn">Cancel</button>
     </div>
   </div>
 
-  <!-- Firebase + Auth Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
@@ -196,81 +263,109 @@
 
     function showLoginModal() {
       loginModal.style.display = "flex";
+      loginModal.setAttribute("aria-hidden", "false");
       loginModal.querySelector('.modal').classList.add('show');
+      loginEmail.focus();
     }
 
     function hideLoginModal() {
       loginModal.style.display = "none";
+      loginModal.setAttribute("aria-hidden", "true");
       loginModal.querySelector('.modal').classList.remove('show');
+      loginEmail.value = "";
+      loginPassword.value = "";
+      loginError.textContent = "";
     }
 
     function showCashoutModal() {
       cashoutModal.style.display = "flex";
+      cashoutModal.setAttribute("aria-hidden", "false");
       cashoutModal.querySelector('.modal').classList.add('show');
+      cancelCashoutBtn.focus();
     }
 
     function hideCashoutModal() {
       cashoutModal.style.display = "none";
+      cashoutModal.setAttribute("aria-hidden", "true");
       cashoutModal.querySelector('.modal').classList.remove('show');
     }
 
-    function updateBalanceForUser(user) {
-      // Simulated balance, replace with Firebase data later
-      balanceBtn.textContent = "$5.000";
-    }
+    // Initial balance, no free $5
+    let userBalance = 0.0;
 
-    onAuthStateChanged(auth, user => {
+    // Update balance display
+    function updateBalanceDisplay() {
+      balanceBtn.textContent = `$${userBalance.toFixed(3)}`;
+    }
+    updateBalanceDisplay();
+
+    // Check auth state on page load
+    onAuthStateChanged(auth, (user) => {
       if (user) {
+        // User is logged in, hide login modal if open
         hideLoginModal();
-        updateBalanceForUser(user);
+        // TODO: Load real balance from your DB here, for demo keep 0
+        updateBalanceDisplay();
       } else {
+        // Show login modal if not logged in
         showLoginModal();
       }
     });
 
-    doLogin.addEventListener("click", () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value.trim();
+    doLogin.addEventListener("click", async () => {
       loginError.textContent = "";
-      signInWithEmailAndPassword(auth, email, password)
-        .then(userCred => {
-          hideLoginModal();
-          updateBalanceForUser(userCred.user);
-        })
-        .catch(err => {
-          loginError.textContent = err.message;
-        });
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+      if (!email || !password) {
+        loginError.textContent = "Please enter email and password.";
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        hideLoginModal();
+      } catch (error) {
+        loginError.textContent = error.message || "Login failed.";
+      }
     });
 
-    doRegister.addEventListener("click", () => {
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value.trim();
+    doRegister.addEventListener("click", async () => {
       loginError.textContent = "";
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(userCred => {
-          hideLoginModal();
-          updateBalanceForUser(userCred.user);
-        })
-        .catch(err => {
-          loginError.textContent = err.message;
-        });
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+      if (!email || !password) {
+        loginError.textContent = "Please enter email and password.";
+        return;
+      }
+      if (password.length < 6) {
+        loginError.textContent = "Password must be at least 6 characters.";
+        return;
+      }
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        hideLoginModal();
+      } catch (error) {
+        loginError.textContent = error.message || "Registration failed.";
+      }
     });
 
     balanceBtn.addEventListener("click", () => {
-      const balance = parseFloat(balanceBtn.textContent.replace(/[^\d.]/g, ""));
-      if (auth.currentUser) {
-        if (balance < 10) {
-          showCashoutModal();
-        } else {
-          alert("You have enough balance to cash out!");
-        }
+      if (userBalance < 10) {
+        showCashoutModal();
       } else {
-        showLoginModal();
+        alert("You can cash out! (This part is not implemented.)");
       }
     });
 
     cancelCashoutBtn.addEventListener("click", () => {
       hideCashoutModal();
+    });
+
+    // Optional: Close modals on Escape key
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (loginModal.style.display === "flex") hideLoginModal();
+        if (cashoutModal.style.display === "flex") hideCashoutModal();
+      }
     });
   </script>
 </body>
