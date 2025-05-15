@@ -5,450 +5,288 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Money Offers</title>
   <style>
-    * { user-select: none; box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #fff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; }
+
     header {
-      background-color: #000;
+      background: #000;
       padding: 1rem 2rem;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-      position: relative;
-      z-index: 10;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     }
-    .logo {
-      font-size: 1.2rem;
-      color: cyan;
-      font-weight: 600;
-    }
+
+    .logo { color: cyan; font-weight: bold; font-size: 1.2rem; }
     .money-button {
-      background-color: #222;
-      color: lime;
-      border: none;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-      box-shadow: 0 0 5px #0f0 inset;
-      transition: background-color 0.3s ease;
-    }
-    .money-button:hover {
-      background-color: #333;
+      background: #222; color: lime; border: none;
+      padding: 0.5rem 1rem; font-size: 1rem; font-weight: bold;
+      border-radius: 5px; box-shadow: 0 0 5px #0f0 inset;
     }
 
-    /* Live feed below header */
-    #liveFeed {
-      background: #000;
-      border-top: 1px solid #0f0;
-      padding: 0.5rem 2rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #0f0;
-      display: flex;
-      justify-content: center;
-      user-select: none;
-      overflow: hidden;
-      position: relative;
-      height: 28px;
-    }
-    #liveFeed span {
-      opacity: 1;
-      transition: opacity 0.5s ease;
-      position: absolute;
-      width: 100%;
+    /* OLD Live feed style: simpler fade */
+    .live-feed {
       text-align: center;
-      left: 0;
-      top: 0;
-    }
-    #liveFeed span.fade-out {
-      opacity: 0;
-    }
-    #liveFeed span.fade-in {
-      opacity: 1;
-    }
-
-    /* Modal styles same as before... */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 1rem;
-    }
-    .modal {
       background: #222;
-      border-radius: 12px;
-      padding: 2rem 2.5rem;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 0 25px #0f0;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-    }
-    .modal.show {
+      padding: 0.5rem;
       opacity: 1;
-      transform: translateY(0);
+      transition: opacity 0.5s ease-in-out;
     }
-    .modal h2 {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-weight: 700;
-      color: lime;
-      text-align: center;
+
+    .offers-container {
+      display: flex; flex-direction: column; gap: 14px;
+      max-width: 380px; margin: 20px auto;
     }
-    .modal p {
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      color: #ccc;
-      text-align: center;
+
+    .offer-card {
+      display: flex; background: #222;
+      border-radius: 8px; padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
     }
-    .modal input {
-      width: 100%;
-      padding: 0.7rem;
-      margin-bottom: 15px;
-      border: none;
+
+    .offer-image-wrapper {
+      margin-right: 12px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    .offer-image {
+      width: 80px; height: 80px; object-fit: cover;
       border-radius: 6px;
-      font-size: 1rem;
-      background-color: #111;
-      color: #eee;
-      box-shadow: inset 0 0 5px #0f0;
-      outline: none;
     }
-    .login-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
+
+    .offer-payment { margin-top: 4px; color: #4caf50; font-weight: bold; }
+    .offer-content { flex: 1; }
+    .offer-title { font-size: 1.1rem; margin-bottom: 6px; }
+    .offer-description { color: #ccc; margin-bottom: 12px; }
+    .complete-task-btn {
+      width: 100%; padding: 8px 0;
+      background: #4caf50; color: white;
+      border: none; border-radius: 5px;
+      cursor: pointer; font-weight: bold;
+    }
+
+    /* OLD Balance popup style */
+    .modal, .balance-popup {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999; display: none;
+    }
+
+    .modal-content, .balance-popup-content {
+      background: #222; /* less bright */
+      padding: 1.5rem 2rem;
+      border-radius: 6px;
+      max-width: 350px;
+      text-align: center; color: #eee;
+      box-shadow: none; /* no glowing red */
+      border: 2px solid #4caf50;
+    }
+
+    .modal-content input, .modal-content button {
+      display: block; margin: 10px auto; padding: 10px;
+      width: 80%; border-radius: 5px;
+      border: 1px solid #4caf50;
+      background: #111;
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .cashout-methods {
+      padding-left: 1rem;
+      text-align: left;
       margin-bottom: 1rem;
+      color: #ccc;
     }
-    .login-actions button {
-      flex: 1;
-      background: #0f0;
-      color: #111;
-      border: none;
-      padding: 0.7rem 0;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 0 10px #0f0;
-      transition: background-color 0.3s ease;
-    }
-    .login-actions button:hover {
-      background: #0c0;
-    }
-    #loginError {
-      color: #f44;
-      text-align: center;
-      min-height: 1.3rem;
-      font-weight: 600;
+    .cashout-methods li {
+      margin: 0.5rem 0;
+      padding: 0.2rem 0;
+      list-style-type: disc;
     }
 
-    /* Cashout Modal Styles */
-    .cashout-options {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0 0 0;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 20px #0f0aa0;
-    }
-    .cashout-options li {
-      padding: 0.85rem 1rem;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 1rem;
-      color: #111;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      border-bottom: 1px solid #0f0a20;
-      transition: background-color 0.25s ease;
-    }
-    .cashout-options li:last-child {
-      border-bottom: none;
-    }
-    .cashout-options li:hover {
-      background-color: #0f0a30;
-      color: #0f0;
-    }
-    .paypal {
-      background: #003087;
-      color: white !important;
-    }
-    .payoneer {
-      background: #FF4800;
-      color: white !important;
-    }
-    .bank {
-      background: #006400;
-      color: white !important;
-    }
-    .amazon {
-      background: #FF9900;
-      color: black !important;
-    }
-    .crypto {
-      background: #5a189a;
-      color: white !important;
-    }
-    .cashout-options li::before {
-      content: "•";
-      font-size: 1.4rem;
-      color: inherit;
-      line-height: 0;
-    }
+    .paypal { color: #03a9f4; }
+    .payee { color: #fbc02d; }
+    .bank { color: #8bc34a; }
+    .amazon { color: #ff9800; }
+    .crypto { color: #9c27b0; }
 
-    .cancel-button {
-      margin-top: 1.4rem;
+    .cancel-btn {
+      margin-top: 1rem;
       width: 100%;
-      padding: 0.7rem;
+      background: #444;
+      color: #ccc;
+      padding: 10px;
       border: none;
-      border-radius: 8px;
-      background: #555;
-      color: white;
-      font-weight: 700;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 0 10px #555;
-      transition: background-color 0.3s ease;
-    }
-    .cancel-button:hover {
-      background-color: #777;
     }
   </style>
 </head>
 <body>
+
   <header>
     <div class="logo">MONEY OFFERS</div>
     <button class="money-button" id="balanceBtn">$0.000</button>
   </header>
 
-  <div id="liveFeed" aria-live="polite" aria-atomic="true">
-    <span id="liveText"></span>
+  <div class="live-feed" id="liveFeed">User #A12X made $1.22 just now</div>
+
+  <div class="offers-container" id="offersContainer">
+    <!-- Offer cards inserted dynamically -->
   </div>
 
   <!-- Login/Register Modal -->
-  <div class="modal-backdrop" id="loginModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
-      <h2 id="loginTitle">Login or Register</h2>
-      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email" />
-      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" />
-      <div class="login-actions">
-        <button id="doLogin" aria-label="Login">Login</button>
-        <button id="doRegister" aria-label="Register">Register</button>
+  <div class="modal" id="authModal">
+    <div class="modal-content">
+      <h3>Login / Register</h3>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <button onclick="register()">Register</button>
+    </div>
+  </div>
+
+  <!-- Balance Popup -->
+  <div class="balance-popup" id="balancePopup">
+    <div class="balance-popup-content">
+      <h3>Insufficient Balance</h3>
+      <p>You need at least $10 to cash out.</p>
+      <ul class="cashout-methods">
+        <li class="paypal">PayPal</li>
+        <li class="payee">Payoneer</li>
+        <li class="bank">Bank Transfer</li>
+        <li class="amazon">Amazon Gift Card</li>
+        <li class="crypto">Crypto Wallet</li>
+      </ul>
+      <button class="cancel-btn" onclick="hideBalancePopup()">Cancel</button>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, set, get, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+    authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+    databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+    projectId: "itzhoyoo-f9f7e",
+    storageBucket: "itzhoyoo-f9f7e.appspot.com",
+    messagingSenderId: "1094792075584",
+    appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+    measurementId: "G-LLT6F9WRKH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const db = getDatabase();
+
+  const balanceBtn = document.getElementById("balanceBtn");
+  const balancePopup = document.getElementById("balancePopup");
+
+  balanceBtn.onclick = () => {
+    balancePopup.style.display = "flex";
+  };
+
+  window.hideBalancePopup = () => balancePopup.style.display = "none";
+
+  const authModal = document.getElementById("authModal");
+  let currentUser = null;
+
+  function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    signInWithEmailAndPassword(auth, email, password).then(() => {
+      authModal.style.display = "none";
+    }).catch(alert);
+  }
+
+  function register() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    createUserWithEmailAndPassword(auth, email, password).then((cred) => {
+      set(ref(db, 'users/' + cred.user.uid), { balance: 0 });
+      authModal.style.display = "none";
+    }).catch(alert);
+  }
+
+  window.login = login;
+  window.register = register;
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      authModal.style.display = "flex";
+    } else {
+      currentUser = user;
+      loadBalance();
+    }
+  });
+
+  function loadBalance() {
+    const balRef = ref(db, 'users/' + currentUser.uid + '/balance');
+    onValue(balRef, (snap) => {
+      const bal = parseFloat(snap.val() || 0).toFixed(3);
+      balanceBtn.textContent = "$" + bal;
+    });
+  }
+
+  function updateBalance(amount) {
+    const userRef = ref(db, 'users/' + currentUser.uid);
+    get(userRef).then((snap) => {
+      const data = snap.val();
+      const newBal = (parseFloat(data?.balance || 0) + amount).toFixed(3);
+      update(userRef, { balance: newBal });
+    });
+  }
+
+  // Add Offer Cards
+  const offerTexts = [
+    {title: "Special Offer 1", pay: 0.10},
+    {title: "Special Offer 2", pay: 0.15},
+    {title: "Special Offer 3", pay: 0.30},
+  ];
+
+  const offersContainer = document.getElementById("offersContainer");
+
+  offerTexts.forEach((o, i) => {
+    const card = document.createElement("div");
+    card.className = "offer-card";
+    card.innerHTML = `
+      <div class="offer-image-wrapper">
+        <img src="https://via.placeholder.com/80" class="offer-image"/>
+        <div class="offer-payment">$${o.pay.toFixed(3)}</div>
       </div>
-      <p id="loginError" aria-live="polite" aria-atomic="true"></p>
-    </div>
-  </div>
+      <div class="offer-content">
+        <h3 class="offer-title">${o.title}</h3>
+        <p class="offer-description">Click to complete this task and earn!</p>
+        <button class="complete-task-btn">Complete Task</button>
+      </div>`;
+    card.querySelector("button").onclick = () => updateBalance(o.pay);
+    offersContainer.appendChild(card);
+  });
 
-  <!-- Cashout Modal -->
-  <div class="modal-backdrop" id="cashoutModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cashoutTitle">
-      <h2 id="cashoutTitle">Insufficient Balance</h2>
-      <p>You need at least $10 to cash out. Choose one:</p>
-      <ul class="cashout-options" role="list">
-        <li class="paypal" tabindex="0">PayPal</li>
-        <li class="payoneer" tabindex="0">Payoneer</li>
-        <li class="bank" tabindex="0">Bank Transfer</li>
-        <li class="amazon" tabindex="0">Amazon Gift Card</li>
-        <li class="crypto" tabindex="0">Crypto (e.g., USDT)</li>
-      </ul><button class="cancel-button" id="cancelCashoutBtn" aria-label="Cancel cashout modal">Cancel</button>
-    </div>
-  </div>
+  // Live feed animation OLD style
+  const liveFeed = document.getElementById("liveFeed");
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
+  function randomUser() {
+    return Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
-      authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
-      databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
-      projectId: "itzhoyoo-f9f7e",
-      storageBucket: "itzhoyoo-f9f7e.firebasestorage.app",
-      messagingSenderId: "1094792075584",
-      appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
-      measurementId: "G-LLT6F9WRKH"
-    };
+  function updateLiveFeed() {
+    liveFeed.style.opacity = 0; // fade out
+    setTimeout(() => {
+      const amount = (Math.random() * 4.9 + 0.1).toFixed(2);
+      liveFeed.textContent = `User #${randomUser()} made $${amount} just now`;
+      liveFeed.style.opacity = 1; // fade in
+    }, 500);
+  }
 
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const auth = getAuth(app);
+  setInterval(updateLiveFeed, 3000);
 
-    // Elements
-    const loginModal = document.getElementById("loginModal");
-    const loginEmail = document.getElementById("loginEmail");
-    const loginPassword = document.getElementById("loginPassword");
-    const doLogin = document.getElementById("doLogin");
-    const doRegister = document.getElementById("doRegister");
-    const loginError = document.getElementById("loginError");
-    const balanceBtn = document.getElementById("balanceBtn");
-    const cashoutModal = document.getElementById("cashoutModal");
-    const cancelCashoutBtn = document.getElementById("cancelCashoutBtn");
-
-    // User balance, starts at zero (no free $5)
-    let userBalance = 0;
-
-    // Show/hide modals functions
-    function showLoginModal() {
-      loginModal.style.display = "flex";
-      loginModal.setAttribute("aria-hidden", "false");
-      loginModal.querySelector('.modal').classList.add('show');
-      loginEmail.focus();
-    }
-    function hideLoginModal() {
-      loginModal.style.display = "none";
-      loginModal.setAttribute("aria-hidden", "true");
-      loginModal.querySelector('.modal').classList.remove('show');
-      loginEmail.value = "";
-      loginPassword.value = "";
-      loginError.textContent = "";
-    }
-    function showCashoutModal() {
-      cashoutModal.style.display = "flex";
-      cashoutModal.setAttribute("aria-hidden", "false");
-      cashoutModal.querySelector('.modal').classList.add('show');
-      cancelCashoutBtn.focus();
-    }
-    function hideCashoutModal() {
-      cashoutModal.style.display = "none";
-      cashoutModal.setAttribute("aria-hidden", "true");
-      cashoutModal.querySelector('.modal').classList.remove('show');
-    }
-
-    // Update balance button text
-    function updateBalanceDisplay() {
-      balanceBtn.textContent = `$${userBalance.toFixed(3)}`;
-    }
-    updateBalanceDisplay();
-
-    // Auth state listener
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        hideLoginModal();
-        // TODO: load user balance from DB here; for now, keep at 0
-        updateBalanceDisplay();
-      } else {
-        showLoginModal();
-      }
-    });
-
-    // Login button click
-    doLogin.addEventListener("click", async () => {
-      loginError.textContent = "";
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-      if (!email || !password) {
-        loginError.textContent = "Please enter email and password.";
-        return;
-      }
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        hideLoginModal();
-      } catch (error) {
-        loginError.textContent = error.message || "Login failed.";
-      }
-    });
-
-    // Register button click
-    doRegister.addEventListener("click", async () => {
-      loginError.textContent = "";
-      const email = loginEmail.value.trim();
-      const password = loginPassword.value;
-      if (!email || !password) {
-        loginError.textContent = "Please enter email and password.";
-        return;
-      }
-      if (password.length < 6) {
-        loginError.textContent = "Password must be at least 6 characters.";
-        return;
-      }
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        hideLoginModal();
-      } catch (error) {
-        loginError.textContent = error.message || "Registration failed.";
-      }
-    });
-
-    // Balance button click to show cashout modal if balance < 10
-    balanceBtn.addEventListener("click", () => {
-      if (userBalance < 10) {
-        showCashoutModal();
-      } else {
-        alert("You can cash out! (Not implemented yet.)");
-      }
-    });
-
-    cancelCashoutBtn.addEventListener("click", () => {
-      hideCashoutModal();
-    });
-
-    // Close modals on Escape key
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        if (loginModal.style.display === "flex") hideLoginModal();
-        if (cashoutModal.style.display === "flex") hideCashoutModal();
-      }
-    });
-
-    // LIVE FEED below header with animated changing user+money every 3 seconds
-    const liveFeed = document.getElementById("liveFeed");
-    const liveText = document.getElementById("liveText");
-
-    // Generate random user like user#A1B9
-    function randomUser() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let id = '';
-      for(let i = 0; i < 4; i++) {
-        id += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return `user#${id}`;
-    }
-
-    // Generate random money between 0.10 and 5.00
-    function randomMoney() {
-      return (Math.random() * (5 - 0.1) + 0.1).toFixed(2);
-    }
-
-    // Animate text change with fade out/fade in
-    function changeLiveText() {
-      // Fade out
-      liveText.classList.add("fade-out");
-
-      setTimeout(() => {
-        // Change text
-        const user = randomUser();
-        const amount = randomMoney();
-        liveText.textContent = `${user} just received $${amount} — just now`;
-
-        // Fade in
-        liveText.classList.remove("fade-out");
-        liveText.classList.add("fade-in");
-      }, 500);
-
-      // Remove fade-in class after fade completes so next fade works properly
-      setTimeout(() => {
-        liveText.classList.remove("fade-in");
-      }, 1000);
-    }
-
-    // Initial live text
-    liveText.textContent = `${randomUser()} just received $${randomMoney()} — just now`;
-
-    // Change every 3 seconds
-    setInterval(changeLiveText, 3000);
-  </script>
+</script>
 </body>
 </html>
