@@ -19,6 +19,8 @@
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      z-index: 10;
     }
     .logo {
       font-size: 1.2rem;
@@ -41,6 +43,38 @@
       background-color: #333;
     }
 
+    /* Live feed below header */
+    #liveFeed {
+      background: #000;
+      border-top: 1px solid #0f0;
+      padding: 0.5rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+      height: 28px;
+    }
+    #liveFeed span {
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      left: 0;
+      top: 0;
+    }
+    #liveFeed span.fade-out {
+      opacity: 0;
+    }
+    #liveFeed span.fade-in {
+      opacity: 1;
+    }
+
+    /* Modal styles same as before... */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -199,6 +233,10 @@
     <button class="money-button" id="balanceBtn">$0.000</button>
   </header>
 
+  <div id="liveFeed" aria-live="polite" aria-atomic="true">
+    <span id="liveText"></span>
+  </div>
+
   <!-- Login/Register Modal -->
   <div class="modal-backdrop" id="loginModal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
@@ -224,50 +262,51 @@
         <li class="bank" tabindex="0">Bank Transfer</li>
         <li class="amazon" tabindex="0">Amazon Gift Card</li>
         <li class="crypto" tabindex="0">Crypto (e.g., USDT)</li>
-      </ul>
-      <button class="cancel-button" id="cancelCashoutBtn">Cancel</button>
+      </ul><button class="cancel-button" id="cancelCashoutBtn" aria-label="Cancel cashout modal">Cancel</button>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-analytics.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
       authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
       databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
       projectId: "itzhoyoo-f9f7e",
-      storageBucket: "itzhoyoo-f9f7e.appspot.com",
+      storageBucket: "itzhoyoo-f9f7e.firebasestorage.app",
       messagingSenderId: "1094792075584",
-      appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5"
+      appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+      measurementId: "G-LLT6F9WRKH"
     };
 
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
 
+    // Elements
     const loginModal = document.getElementById("loginModal");
-    const cashoutModal = document.getElementById("cashoutModal");
-    const balanceBtn = document.getElementById("balanceBtn");
     const loginEmail = document.getElementById("loginEmail");
     const loginPassword = document.getElementById("loginPassword");
-    const loginError = document.getElementById("loginError");
     const doLogin = document.getElementById("doLogin");
     const doRegister = document.getElementById("doRegister");
+    const loginError = document.getElementById("loginError");
+    const balanceBtn = document.getElementById("balanceBtn");
+    const cashoutModal = document.getElementById("cashoutModal");
     const cancelCashoutBtn = document.getElementById("cancelCashoutBtn");
 
+    // User balance, starts at zero (no free $5)
+    let userBalance = 0;
+
+    // Show/hide modals functions
     function showLoginModal() {
       loginModal.style.display = "flex";
       loginModal.setAttribute("aria-hidden", "false");
       loginModal.querySelector('.modal').classList.add('show');
       loginEmail.focus();
     }
-
     function hideLoginModal() {
       loginModal.style.display = "none";
       loginModal.setAttribute("aria-hidden", "true");
@@ -276,42 +315,36 @@
       loginPassword.value = "";
       loginError.textContent = "";
     }
-
     function showCashoutModal() {
       cashoutModal.style.display = "flex";
       cashoutModal.setAttribute("aria-hidden", "false");
       cashoutModal.querySelector('.modal').classList.add('show');
       cancelCashoutBtn.focus();
     }
-
     function hideCashoutModal() {
       cashoutModal.style.display = "none";
       cashoutModal.setAttribute("aria-hidden", "true");
       cashoutModal.querySelector('.modal').classList.remove('show');
     }
 
-    // Initial balance, no free $5
-    let userBalance = 0.0;
-
-    // Update balance display
+    // Update balance button text
     function updateBalanceDisplay() {
       balanceBtn.textContent = `$${userBalance.toFixed(3)}`;
     }
     updateBalanceDisplay();
 
-    // Check auth state on page load
+    // Auth state listener
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is logged in, hide login modal if open
         hideLoginModal();
-        // TODO: Load real balance from your DB here, for demo keep 0
+        // TODO: load user balance from DB here; for now, keep at 0
         updateBalanceDisplay();
       } else {
-        // Show login modal if not logged in
         showLoginModal();
       }
     });
 
+    // Login button click
     doLogin.addEventListener("click", async () => {
       loginError.textContent = "";
       const email = loginEmail.value.trim();
@@ -328,6 +361,7 @@
       }
     });
 
+    // Register button click
     doRegister.addEventListener("click", async () => {
       loginError.textContent = "";
       const email = loginEmail.value.trim();
@@ -348,11 +382,12 @@
       }
     });
 
+    // Balance button click to show cashout modal if balance < 10
     balanceBtn.addEventListener("click", () => {
       if (userBalance < 10) {
         showCashoutModal();
       } else {
-        alert("You can cash out! (This part is not implemented.)");
+        alert("You can cash out! (Not implemented yet.)");
       }
     });
 
@@ -360,13 +395,60 @@
       hideCashoutModal();
     });
 
-    // Optional: Close modals on Escape key
+    // Close modals on Escape key
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (loginModal.style.display === "flex") hideLoginModal();
         if (cashoutModal.style.display === "flex") hideCashoutModal();
       }
     });
+
+    // LIVE FEED below header with animated changing user+money every 3 seconds
+    const liveFeed = document.getElementById("liveFeed");
+    const liveText = document.getElementById("liveText");
+
+    // Generate random user like user#A1B9
+    function randomUser() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let id = '';
+      for(let i = 0; i < 4; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `user#${id}`;
+    }
+
+    // Generate random money between 0.10 and 5.00
+    function randomMoney() {
+      return (Math.random() * (5 - 0.1) + 0.1).toFixed(2);
+    }
+
+    // Animate text change with fade out/fade in
+    function changeLiveText() {
+      // Fade out
+      liveText.classList.add("fade-out");
+
+      setTimeout(() => {
+        // Change text
+        const user = randomUser();
+        const amount = randomMoney();
+        liveText.textContent = `${user} just received $${amount} — just now`;
+
+        // Fade in
+        liveText.classList.remove("fade-out");
+        liveText.classList.add("fade-in");
+      }, 500);
+
+      // Remove fade-in class after fade completes so next fade works properly
+      setTimeout(() => {
+        liveText.classList.remove("fade-in");
+      }, 1000);
+    }
+
+    // Initial live text
+    liveText.textContent = `${randomUser()} just received $${randomMoney()} — just now`;
+
+    // Change every 3 seconds
+    setInterval(changeLiveText, 3000);
   </script>
 </body>
 </html>
