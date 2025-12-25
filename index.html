@@ -3,73 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <title>2026 Smart Wealth Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #111;
-            color: white;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 80%;
-            max-width: 600px;
-        }
-
-        .option {
-            background-color: #222;
-            color: white;
-            padding: 20px;
-            font-size: 18px;
-            margin: 10px;
-            width: 100%;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .option:hover {
-            background-color: #444;
-        }
-
-        .option i {
-            margin-right: 10px;
-        }
-
-        .heading {
-            font-size: 32px;
-            margin-bottom: 40px;
-        }
+        body { background: #000; color: white; font-family: -apple-system, system-ui, sans-serif; margin: 0; overflow-x: hidden; }
+        .ios-blur { background: rgba(25, 25, 25, 0.75); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px; }
+        .input-style { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 18px; width: 100%; outline: none; text-align: center; font-weight: 700; font-size: 1.5rem; transition: all 0.3s; }
+        .input-style:focus { border-color: rgba(59, 130, 246, 0.5); background: rgba(255, 255, 255, 0.06); }
     </style>
 </head>
 <body>
+    <div id="root"></div>
 
-    <div class="container">
-        <div class="heading">Admin Panel</div>
-        
-        <a href="leaderboard.html" class="option"><i class="fas fa-trophy"></i>Leaderboard</a>
-        <a href="usersandteams.html" class="option"><i class="fas fa-users"></i>Users and Teams</a>
-        <a href="previous.html" class="option"><i class="fas fa-history"></i>Previous</a>
-        <a href="fixtures.html" class="option"><i class="fas fa-calendar"></i>Fixtures</a>
-        <a href="season.html" class="option"><i class="fas fa-calendar-alt"></i>Season</a>
-        <a href="matchmaking.html" class="option"><i class="fas fa-cogs"></i>Matchmaking</a>
-        <a href="matchcodes.html" class="option"><i class="fas fa-barcode"></i>Match Codes</a>
-    </div>
+    <script type="text/babel">
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFHskUWiyHhZke3KT9kkOtFI_gPsKfiGo",
+            authDomain: "itzhoyoo-f9f7e.firebaseapp.com",
+            databaseURL: "https://itzhoyoo-f9f7e-default-rtdb.firebaseio.com",
+            projectId: "itzhoyoo-f9f7e",
+            storageBucket: "itzhoyoo-f9f7e.filestorage.app",
+            messagingSenderId: "1094792075584",
+            appId: "1:1094792075584:web:d49e9c3f899d3cd31082a5",
+            measurementId: "G-LLT6F9WRKH"
+        };
 
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        const App = () => {
+            const [user, setUser] = React.useState(null);
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [totalEarned, setTotalEarned] = React.useState(0);
+            const [inputVal, setInputVal] = React.useState('');
+            const [timers, setTimers] = React.useState({ days: 0, hrs: 0, min: 0, sec: 0, hrsToday: 0 });
+
+            const GOAL = 10000;
+            const START_2026 = new Date('January 1, 2026 00:00:00').getTime();
+            const END_2026 = new Date('January 1, 2027 00:00:00').getTime();
+
+            React.useEffect(() => {
+                const unsubscribe = auth.onAuthStateChanged((u) => {
+                    setUser(u);
+                    if (u) {
+                        db.ref(`users/${u.uid}/totalEarned`).on('value', (snap) => {
+                            setTotalEarned(Number(snap.val()) || 0);
+                        });
+                    }
+                });
+
+                const ticker = setInterval(() => {
+                    const now = new Date();
+                    const nowMs = now.getTime();
+                    
+                    // Countdown to Jan 1, 2027
+                    const diff = END_2026 - nowMs;
+                    
+                    // Countdown to end of current day
+                    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
+                    const diffToday = endOfToday - nowMs;
+
+                    setTimers({
+                        days: Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24))),
+                        hrs: Math.max(0, Math.floor((diff / (1000 * 60 * 60)) % 24)),
+                        min: Math.max(0, Math.floor((diff / 1000 / 60) % 60)),
+                        sec: Math.max(0, Math.floor((diff / 1000) % 60)),
+                        hrsToday: Math.max(0, (diffToday / (1000 * 60 * 60)).toFixed(1))
+                    });
+                }, 1000);
+
+                return () => { unsubscribe(); clearInterval(ticker); };
+            }, []);
+
+            const updateBalance = (isAdding) => {
+                const val = parseFloat(inputVal);
+                if (isNaN(val) || val <= 0) return;
+                
+                const change = isAdding ? val : -val;
+                const newTotal = Math.max(0, totalEarned + change);
+                
+                db.ref(`users/${user.uid}`).update({ totalEarned: newTotal })
+                  .then(() => setInputVal(''))
+                  .catch(err => alert("Error updating: " + err.message));
+            };
+
+            // Smart Math
+            const daysRemaining = timers.days > 0 ? timers.days : 1;
+            const smartDailyTarget = ((GOAL - totalEarned) / daysRemaining).toFixed(2);
+            const standardPace = 27.40; // Total Goal / 365
+            const totalDaysElapsed = Math.floor((new Date().getTime() - START_2026) / (1000 * 60 * 60 * 24));
+            const targetRightNow = Math.max(0, (totalDaysElapsed * standardPace));
+            const deficit = (targetRightNow - totalEarned).toFixed(2);
+
+            if (!user) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-6">
+                        <div className="ios-blur p-10 w-full max-w-sm text-center shadow-2xl">
+                            <h1 className="text-2xl font-bold mb-8 tracking-tight">System Login</h1>
+                            <div className="space-y-3">
+                                <input type="email" placeholder="Email" className="input-style !text-base" onChange={e => setEmail(e.target.value)} />
+                                <input type="password" placeholder="Password" className="input-style !text-base" onChange={e => setPassword(e.target.value)} />
+                                <button onClick={() => auth.signInWithEmailAndPassword(email, password)} className="w-full bg-white text-black font-bold py-4 rounded-2xl mt-4">Sign In</button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen p-6 max-w-md mx-auto flex flex-col items-center justify-center">
+                    
+                    {/* User Header */}
+                    <div className="w-full flex justify-between items-center mb-8">
+                        <div className="bg-white/10 px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-[10px] font-black uppercase text-white/60 tracking-widest">@{user.email.split('@')[0]}</span>
+                        </div>
+                        <button onClick={() => auth.signOut()} className="text-[10px] font-black uppercase text-red-500/50">Logout</button>
+                    </div>
+
+                    {/* Today's Countdown */}
+                    <div className="text-center mb-10">
+                        <h2 className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Hours Left Today</h2>
+                        <h1 className="text-6xl font-light tracking-tighter">{timers.hrsToday}<span className="text-2xl ml-1 text-white/30">hrs</span></h1>
+                    </div>
+
+                    {/* Main Interface */}
+                    <div className="ios-blur p-8 w-full shadow-2xl border border-white/20">
+                        <div className="flex justify-between items-start mb-8">
+                            <div>
+                                <p className="text-white/30 text-[9px] font-black uppercase tracking-widest">Balance</p>
+                                <p className="text-4xl font-bold tracking-tighter">${totalEarned.toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-white/30 text-[9px] font-black uppercase tracking-widest text-red-400">Pace Deficit</p>
+                                <p className={`font-bold tracking-tight ${deficit > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                    {deficit > 0 ? `-$${deficit}` : 'On Track'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Visual Progress */}
+                        <div className="mb-10 relative">
+                            <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 transition-all duration-1000" style={{ width: `${Math.min((totalEarned/GOAL)*100, 100)}%` }}></div>
+                            </div>
+                            <p className="absolute -top-6 right-0 text-[10px] font-black text-blue-400 uppercase">
+                                {((totalEarned/GOAL)*100).toFixed(1)}% of $10K
+                            </p>
+                        </div>
+
+                        {/* Input & Actions */}
+                        <div className="space-y-4">
+                            <input 
+                                type="number" 
+                                value={inputVal} 
+                                onChange={e => setInputVal(e.target.value)} 
+                                placeholder="0.00" 
+                                className="input-style" 
+                            />
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => updateBalance(true)} className="bg-white text-black font-black py-4 rounded-2xl active:scale-95 transition-all text-xs uppercase tracking-widest">Add</button>
+                                <button onClick={() => updateBalance(false)} className="bg-red-500 text-white font-black py-4 rounded-2xl active:scale-95 transition-all text-xs uppercase tracking-widest">Deduct</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer Info */}
+                    <div className="mt-8 grid grid-cols-2 w-full gap-4 text-center">
+                        <div className="bg-white/5 rounded-3xl p-4 border border-white/5">
+                            <p className="text-[9px] text-white/30 font-black uppercase mb-1">Target Per Day</p>
+                            <p className="text-xl font-bold tracking-tight text-white">${smartDailyTarget}</p>
+                        </div>
+                        <div className="bg-white/5 rounded-3xl p-4 border border-white/5">
+                            <p className="text-[9px] text-white/30 font-black uppercase mb-1">Days Left</p>
+                            <p className="text-xl font-bold tracking-tight text-white">{timers.days}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
